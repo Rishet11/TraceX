@@ -10,10 +10,12 @@ test('parseCountToken handles K/M/B and commas', () => {
 });
 
 test('extractStatsFromSnippet reads replies/retweets/likes from text', () => {
-  const stats = extractStatsFromSnippet('... 24 Retweets 59 Likes 1,681 Replies ...');
+  const stats = extractStatsFromSnippet('... 24 Retweets 59 Likes 1,681 Replies 13.1K Views 9 Bookmarks ...');
   assert.equal(stats.retweets, 24);
   assert.equal(stats.likes, 59);
   assert.equal(stats.replies, 1681);
+  assert.equal(stats.views, 13100);
+  assert.equal(stats.bookmarks, 9);
 });
 
 test('extractStatsFromSnippet treats quote tweets as engagement signal', () => {

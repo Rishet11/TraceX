@@ -1,6 +1,6 @@
 import Image from 'next/image';
 import { useEffect, useState } from 'react';
-import { ExternalLink, Heart, MessageCircle, Repeat, Calendar, Sparkles, AlertCircle } from 'lucide-react';
+import { ExternalLink, Heart, MessageCircle, Repeat, Calendar, Sparkles, AlertCircle, Eye, Bookmark } from 'lucide-react';
 import { cn } from '@/lib/utils'; // Assuming cn is available
 
 const DEFAULT_AVATAR = 'https://abs.twimg.com/sticky/default_profile_images/default_profile_normal.png';
@@ -124,6 +124,12 @@ export default function ResultCard({ tweet, similarity, badges, originalText }) 
           </span>
           <span className="flex items-center gap-1.5 hover:text-pink-500 transition-colors" title="Likes">
             <Heart size={18} /> <span className="font-medium">{formatMetric(tweet.stats.likes)}</span>
+          </span>
+          <span className="flex items-center gap-1.5 hover:text-slate-600 transition-colors" title="Views">
+            <Eye size={18} /> <span className="font-medium">{formatMetric(tweet.stats?.views)}</span>
+          </span>
+          <span className="flex items-center gap-1.5 hover:text-amber-600 transition-colors" title="Bookmarks">
+            <Bookmark size={18} /> <span className="font-medium">{formatMetric(tweet.stats?.bookmarks)}</span>
           </span>
         </div>
         
