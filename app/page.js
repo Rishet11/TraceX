@@ -49,6 +49,7 @@ export default function Home() {
   const [similarityThreshold, setSimilarityThreshold] = useState(80);
   const [hideRetweets, setHideRetweets] = useState(false);
   const [sortBy, setSortBy] = useState('date');
+  const [showFiltersMobile, setShowFiltersMobile] = useState(false);
   const [loadingStep, setLoadingStep] = useState(0);
 
   useEffect(() => {
@@ -253,14 +254,15 @@ export default function Home() {
     setSearchStatus('idle');
     setSearchMeta(null);
     setShareWarning('');
+    setShowFiltersMobile(false);
   };
 
   return (
     <div className="min-h-screen flex flex-col">
       <AppHeader />
       <main className="flex-1 page-section">
-        <div className="app-container space-y-6">
-          <section className="surface-elevated px-6 py-8 md:p-10 text-center space-y-4">
+        <div className="app-container space-y-5 md:space-y-6">
+          <section className="surface-elevated px-5 py-7 md:p-10 text-center space-y-5">
             <div className="inline-flex items-center rounded-full bg-[var(--brand-50)] border border-[var(--brand-100)] px-3 py-1 text-xs font-semibold text-[var(--brand-600)] tracking-wide gap-1.5">
               <Sparkles size={14} />
               Protect your ideas from tweet copycats
@@ -285,15 +287,9 @@ export default function Home() {
             <div className="flex justify-center gap-3 text-sm pt-1">
               <Link
                 href="/pricing"
-                className="px-4 py-2 rounded-lg bg-slate-900 text-white font-semibold hover:bg-black transition-colors"
+                className="text-slate-700 hover:text-slate-900 underline underline-offset-2 font-medium"
               >
-                View Pricing
-              </Link>
-              <Link
-                href="/account"
-                className="px-4 py-2 rounded-lg bg-white border border-slate-200 text-slate-700 font-semibold hover:bg-slate-50 transition-colors"
-              >
-                Account
+                Explore pricing
               </Link>
             </div>
           </section>
@@ -302,7 +298,7 @@ export default function Home() {
 
           {searchStatus === 'idle' && (
             <>
-              <section className="surface-card p-4 md:p-5 space-y-3">
+              <section className="surface-card p-4 md:p-5 space-y-4">
                 <div className="text-sm font-semibold text-slate-800">Try it now</div>
                 <div className="flex flex-wrap gap-2">
                   {QUICK_EXAMPLES.map((example) => (
@@ -317,7 +313,7 @@ export default function Home() {
                 </div>
               </section>
 
-              <section className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              <section className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="surface-card p-4">
                   <div className="text-sm font-semibold text-slate-900 mb-1">
                     1. Paste tweet text or URL
@@ -341,7 +337,7 @@ export default function Home() {
           )}
 
           {searchStatus !== 'idle' && (
-            <section className="space-y-6">
+            <section className="space-y-5 md:space-y-6">
               {(searchStatus === 'success' || searchStatus === 'error') && query && (
                 <div className="surface-card px-4 py-3 text-sm flex flex-col md:flex-row md:items-center md:justify-between gap-2">
                   <div className="text-gray-700">
@@ -395,7 +391,7 @@ export default function Home() {
 
               {searchStatus === 'success' && results.length > 0 && (
                 <>
-                  <div className="surface-card p-4 space-y-4 sticky top-20 z-10">
+                  <div className="surface-card p-3.5 md:p-4 space-y-3 md:space-y-4 sticky top-20 z-10">
                     <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
                       <div className="flex items-center gap-2 text-sm">
                         <span className="inline-flex items-center px-2.5 py-1 rounded-full bg-slate-100 text-slate-700 font-semibold">
@@ -405,10 +401,20 @@ export default function Home() {
                           {totalMatches} total
                         </span>
                       </div>
-                      {sourceSummary && <div className="text-xs text-gray-500">{sourceSummary}</div>}
+                      {sourceSummary && <div className="text-xs text-slate-600">{sourceSummary}</div>}
                     </div>
-                    <div className="flex flex-col xl:flex-row xl:items-center xl:justify-between gap-4">
-                      <div className="grid grid-cols-1 sm:grid-cols-2 xl:flex gap-3 w-full xl:w-auto">
+                    <div className="flex flex-col xl:flex-row xl:items-center xl:justify-between gap-3 md:gap-4">
+                      <button
+                        type="button"
+                        onClick={() => setShowFiltersMobile((prev) => !prev)}
+                        className="inline-flex md:hidden items-center justify-center px-3 py-2 rounded-lg border border-slate-200 bg-white text-slate-700 text-sm font-medium"
+                      >
+                        {showFiltersMobile ? 'Hide filters' : 'Show filters'}
+                      </button>
+
+                      <div
+                        className={`${showFiltersMobile ? 'grid' : 'hidden'} md:grid grid-cols-1 sm:grid-cols-2 xl:flex gap-2.5 md:gap-3 w-full xl:w-auto`}
+                      >
                         <div className="flex items-center gap-2 bg-slate-50 rounded-lg border border-slate-200 px-3 py-2">
                           <Filter size={18} className="text-gray-500" />
                           <span className="text-sm font-medium text-gray-700 whitespace-nowrap">
@@ -453,10 +459,10 @@ export default function Home() {
                         </div>
                       </div>
 
-                      <div className="flex flex-col sm:flex-row gap-2 items-stretch sm:items-center">
+                      <div className="flex flex-col sm:flex-row gap-2 items-stretch sm:items-center sm:justify-end">
                         <button
                           onClick={generateShareUrl}
-                          className="flex items-center justify-center gap-2 px-4 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors font-medium text-sm"
+                          className="flex items-center justify-center gap-2 px-4 py-2 bg-slate-900 text-white rounded-lg hover:bg-black transition-colors font-medium text-sm"
                         >
                           <Share2 size={16} /> Share Results
                         </button>
@@ -477,7 +483,7 @@ export default function Home() {
                     )}
                   </div>
 
-                  <div className="space-y-4">
+                  <div className="space-y-3 md:space-y-4">
                     {showDebugPanel && (
                       <div className="text-xs bg-slate-50 border border-slate-200 text-slate-600 rounded-lg p-3">
                         <div className="font-semibold text-slate-700 mb-1">Debug Diagnostics</div>
@@ -530,7 +536,7 @@ export default function Home() {
                           );
                         })}
 
-                        <div className="surface-card p-4 text-sm text-slate-700 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+                        <div className="surface-card p-4 md:p-5 text-sm text-slate-700 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
                           <div>
                             Need unlimited checks and priority reliability?
                             <span className="font-semibold"> Upgrade when you are ready.</span>
@@ -549,7 +555,7 @@ export default function Home() {
               )}
 
               {searchStatus === 'success' && results.length === 0 && (
-                <div className="surface-card p-8 text-center space-y-3">
+                <div className="surface-card p-6 md:p-8 text-center space-y-3">
                   <h3 className="text-lg font-semibold text-gray-900">No copies found</h3>
                   <p className="text-gray-600 max-w-md mx-auto">
                     We could not find matching tweets for this query right now.
@@ -575,7 +581,7 @@ export default function Home() {
               )}
 
               {searchStatus === 'error' && (
-                <div className="surface-card p-8 text-center space-y-4">
+                <div className="surface-card p-6 md:p-8 text-center space-y-4">
                   <div className="text-yellow-500 mx-auto w-12 h-12 flex items-center justify-center bg-yellow-50 rounded-full text-2xl">
                     ⚠️
                   </div>
@@ -588,7 +594,7 @@ export default function Home() {
                   <div className="flex flex-col sm:flex-row items-center justify-center gap-2">
                     <button
                       onClick={() => handleSearch(query, lastSearchOptions)}
-                      className="inline-flex items-center px-5 py-2.5 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors font-medium text-sm"
+                      className="inline-flex items-center px-5 py-2.5 bg-slate-900 text-white rounded-lg hover:bg-black transition-colors font-medium text-sm"
                     >
                       Retry Search
                     </button>
@@ -596,13 +602,13 @@ export default function Home() {
                       href={`https://x.com/search?q=${encodeURIComponent(`"${query}"`)}&f=live`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center px-6 py-3 bg-black text-white rounded-lg hover:bg-gray-800 transition-colors font-medium"
+                      className="inline-flex items-center px-2 py-1 text-sm text-slate-700 hover:text-slate-900 underline underline-offset-2"
                     >
-                      Search on X
+                      Search on X instead
                     </a>
                     <button
                       onClick={resetSearch}
-                      className="inline-flex items-center px-5 py-2.5 bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200 transition-colors font-medium text-sm"
+                      className="inline-flex items-center px-2 py-1 text-sm text-slate-700 hover:text-slate-900 underline underline-offset-2"
                     >
                       Start Over
                     </button>

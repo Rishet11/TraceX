@@ -103,7 +103,7 @@ export default function ResultCard({ tweet, similarity, badges, originalText }) 
 
   return (
     <article className="surface-card surface-interactive p-5 md:p-6">
-      <header className="flex items-start justify-between gap-3 mb-4">
+      <header className="flex items-start justify-between gap-3 mb-5">
         <div className="flex items-center gap-3 min-w-0">
           <div className="relative shrink-0">
             <Image
@@ -137,12 +137,12 @@ export default function ResultCard({ tweet, similarity, badges, originalText }) 
         </div>
       </header>
 
-      <p className="text-slate-800 text-lg mb-4 whitespace-pre-wrap break-words leading-[1.55]">
+      <p className="text-slate-800 text-base md:text-lg mb-5 whitespace-pre-wrap break-words leading-[1.6]">
         {tweet?.content || ''}
       </p>
 
       {badges && badges.length > 0 && (
-        <div className="flex flex-wrap gap-2 mb-4">
+        <div className="flex flex-wrap gap-2 mb-5">
           {badges.map((badge, index) => (
             <span
               key={index}
@@ -154,7 +154,7 @@ export default function ResultCard({ tweet, similarity, badges, originalText }) 
         </div>
       )}
 
-      <div className="pt-4 border-t border-slate-100 space-y-3">
+      <div className="pt-4 border-t border-slate-100 space-y-3.5">
         <div className="flex flex-wrap gap-x-4 gap-y-2 text-slate-500 text-sm">
           <span className="flex items-center gap-1.5" title="Replies">
             <MessageCircle size={17} />
@@ -189,7 +189,7 @@ export default function ResultCard({ tweet, similarity, badges, originalText }) 
             </button>
           )}
 
-          <span className="flex items-center gap-1.5 text-slate-400 text-xs">
+          <span className="flex items-center gap-1.5 text-slate-600 text-xs">
             <Calendar size={15} /> {tweet?.relativeDate || 'Recently found'}
           </span>
           <a
@@ -204,20 +204,20 @@ export default function ResultCard({ tweet, similarity, badges, originalText }) 
       </div>
 
       {isAnalyzing && (
-        <div className="mt-4 p-3 bg-violet-50 rounded-xl border border-violet-100 animate-pulse flex items-center gap-3">
+        <div className="mt-5 p-3 bg-violet-50 rounded-xl border border-violet-100 animate-pulse flex items-center gap-3">
           <Sparkles className="text-violet-500" size={18} />
           <span className="text-violet-700 font-medium text-sm">Analyzing similarity with AI...</span>
         </div>
       )}
 
       {error && (
-        <div className="mt-4 p-3 bg-[var(--danger-50)] text-[var(--danger-600)] rounded-lg text-sm border border-red-100 flex items-center gap-2">
+        <div className="mt-5 p-3 bg-[var(--danger-50)] text-[var(--danger-600)] rounded-lg text-sm border border-red-100 flex items-center gap-2">
           <AlertCircle size={16} /> {error}
         </div>
       )}
 
       {analysis && (
-        <div className="mt-4 bg-violet-50 rounded-xl border border-violet-100 p-4">
+        <div className="mt-5 bg-violet-50 rounded-xl border border-violet-100 p-4">
           <div className="flex flex-wrap items-center justify-between mb-2 gap-2">
             <h4 className="font-bold text-violet-900 flex items-center gap-2">
               <Sparkles size={16} className="text-violet-600" />

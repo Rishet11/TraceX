@@ -28,7 +28,7 @@ export default function AppHeader() {
           </Link>
           <Link
             href="/account"
-            className="px-3 py-2 rounded-lg bg-slate-900 text-white font-medium hover:bg-black transition-colors"
+            className="px-3 py-2 rounded-lg text-slate-700 hover:bg-slate-100 transition-colors"
           >
             Account
           </Link>

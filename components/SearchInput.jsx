@@ -66,9 +66,18 @@ export default function SearchInput({ onSearch, isLoading }) {
   };
 
   return (
-    <section className="surface-elevated p-4 md:p-5">
-      <form onSubmit={handleSubmit} className="space-y-3">
+    <section className="surface-elevated p-4 md:p-6">
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div>
+          <label htmlFor="tweet-query" className="block text-sm font-semibold text-slate-800 mb-1">
+            Tweet text or URL
+          </label>
+          <p className="text-xs text-slate-600">
+            Paste a tweet URL or plain text to check for likely copies.
+          </p>
+        </div>
         <textarea
+          id="tweet-query"
           className="w-full p-4 bg-white outline-none text-slate-800 placeholder-slate-400 font-medium text-lg resize-none min-h-[140px] rounded-xl border border-[var(--border)] focus:border-[var(--brand-500)] focus:ring-2 focus:ring-[var(--brand-100)]"
           placeholder="Paste tweet text or URL here..."
           value={input}
@@ -76,7 +85,7 @@ export default function SearchInput({ onSearch, isLoading }) {
           disabled={isLoading || isFetchingUrl}
           aria-label="Tweet text or URL input"
         />
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pt-1">
           <div className="text-xs text-slate-500">
             {input.length > 0 ? `${input.length} characters` : 'Supports X/Twitter URLs and plain text'}
           </div>
