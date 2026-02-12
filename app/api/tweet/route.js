@@ -19,7 +19,7 @@ export async function POST(request) {
 
     const tweet = await getTweetById(tweetId);
 
-    return NextResponse.json({ tweet });
+    return NextResponse.json({ tweet, tweetId });
   } catch (error) {
     console.error('Tweet Fetch API Error:', error);
     return NextResponse.json({ error: 'Failed to fetch tweet', details: error.message }, { status: 500 });
