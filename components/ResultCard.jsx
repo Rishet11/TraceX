@@ -4,6 +4,7 @@ import { ExternalLink, Heart, MessageCircle, Repeat, Calendar, Sparkles, AlertCi
 import { cn } from '@/lib/utils'; // Assuming cn is available
 
 const DEFAULT_AVATAR = 'https://abs.twimg.com/sticky/default_profile_images/default_profile_normal.png';
+const compactNumber = new Intl.NumberFormat('en', { notation: 'compact', maximumFractionDigits: 1 });
 
 function isValidAnalysisPayload(payload) {
   if (!payload || typeof payload !== 'object') return false;
@@ -26,6 +27,7 @@ export default function ResultCard({ tweet, similarity, badges, originalText }) 
   const similarityColor = similarity >= 90 ? 'text-green-600 bg-green-50 border-green-200' :
     similarity >= 70 ? 'text-yellow-600 bg-yellow-50 border-yellow-200' :
     'text-gray-600 bg-gray-50 border-gray-200';
+  const formatMetric = (value) => compactNumber.format(Number(value) || 0);
 
   const handleAnalyze = async () => {
     if (!originalText?.trim()) {
@@ -112,20 +114,20 @@ export default function ResultCard({ tweet, similarity, badges, originalText }) 
       )}
 
       {/* Stats & Actions */}
-      <div className="flex items-center justify-between pt-5 border-t border-gray-100 text-gray-500 text-sm">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pt-5 border-t border-gray-100 text-gray-500 text-sm">
         <div className="flex gap-6">
           <span className="flex items-center gap-1.5 hover:text-blue-500 transition-colors" title="Replies">
-            <MessageCircle size={18} /> <span className="font-medium">{tweet.stats.replies}</span>
+            <MessageCircle size={18} /> <span className="font-medium">{formatMetric(tweet.stats.replies)}</span>
           </span>
           <span className="flex items-center gap-1.5 hover:text-green-500 transition-colors" title="Retweets">
-            <Repeat size={18} /> <span className="font-medium">{tweet.stats.retweets}</span>
+            <Repeat size={18} /> <span className="font-medium">{formatMetric(tweet.stats.retweets)}</span>
           </span>
           <span className="flex items-center gap-1.5 hover:text-pink-500 transition-colors" title="Likes">
-            <Heart size={18} /> <span className="font-medium">{tweet.stats.likes}</span>
+            <Heart size={18} /> <span className="font-medium">{formatMetric(tweet.stats.likes)}</span>
           </span>
         </div>
         
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
            {/* AI Analysis Button */}
            {!analysis && !isAnalyzing && (
              <button

@@ -188,6 +188,9 @@ export default function Home() {
 
   const showDebugPanel = process.env.NODE_ENV !== 'production' && searchMeta;
   const isDegradedSources = searchStatus === 'error' && searchMeta?.reason === 'all_sources_failed';
+  const totalMatches = results.length;
+  const visibleMatches = processedData.sorted.length;
+  const isShareSuccess = shareWarning.toLowerCase().includes('copied');
 
   const resetSearch = () => {
     setQuery('');
@@ -201,22 +204,45 @@ export default function Home() {
   };
 
   return (
-    <main className="min-h-screen bg-gray-50 flex flex-col py-10 px-4 md:px-0">
-      <div className="max-w-3xl mx-auto w-full space-y-8">
-        <div className="text-center space-y-2">
-          <h1 className="text-4xl font-extrabold text-slate-900 tracking-tight">Tweet Copy Detector</h1>
-          <p className="text-slate-600">Find who stole your tweet in seconds. Free & Open Source.</p>
+    <main className="min-h-screen bg-gray-50 flex flex-col py-8 px-4 md:px-0">
+      <div className="max-w-4xl mx-auto w-full space-y-6">
+        <div className="text-center space-y-3">
+          <div className="inline-flex items-center rounded-full bg-blue-50 border border-blue-100 px-3 py-1 text-xs font-semibold text-blue-700 tracking-wide">
+            Search + Similarity + AI Verdict
+          </div>
+          <h1 className="text-4xl md:text-5xl font-extrabold text-slate-900 tracking-tight">Tweet Copy Detector</h1>
+          <p className="text-slate-600 max-w-2xl mx-auto">Paste tweet text or a tweet URL to find likely copies, then filter by similarity and engagement.</p>
         </div>
 
         <SearchInput onSearch={handleSearch} isLoading={loading} />
 
         {searchStatus !== 'idle' && (
            <div className="space-y-6">
+              {searchStatus === 'loading' && (
+                <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 text-center">
+                  <p className="text-gray-600 font-medium">Searching across sources and ranking matches...</p>
+                </div>
+              )}
+
               {searchStatus === 'success' && results.length > 0 && (
                 <>
-                    <div className="flex flex-col md:flex-row justify-between items-center bg-white p-4 rounded-xl shadow-sm border border-gray-100 gap-4">
-                     <div className="flex flex-col md:flex-row gap-4 w-full md:w-auto items-center">
-                        <div className="flex items-center gap-2">
+                    <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 space-y-4">
+                      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+                        <div className="flex items-center gap-2 text-sm">
+                          <span className="inline-flex items-center px-2.5 py-1 rounded-full bg-slate-100 text-slate-700 font-semibold">
+                            {visibleMatches} visible
+                          </span>
+                          <span className="inline-flex items-center px-2.5 py-1 rounded-full bg-slate-100 text-slate-700 font-semibold">
+                            {totalMatches} total
+                          </span>
+                        </div>
+                        {sourceSummary && (
+                          <div className="text-xs text-gray-500">{sourceSummary}</div>
+                        )}
+                      </div>
+                      <div className="flex flex-col xl:flex-row xl:items-center xl:justify-between gap-4">
+                     <div className="grid grid-cols-1 sm:grid-cols-2 xl:flex gap-3 w-full xl:w-auto">
+                        <div className="flex items-center gap-2 bg-slate-50 rounded-lg border border-slate-200 px-3 py-2">
                           <Filter size={18} className="text-gray-500" />
                           <span className="text-sm font-medium text-gray-700 whitespace-nowrap">Similarity: {similarityThreshold}%+</span>
                           <input 
@@ -226,10 +252,11 @@ export default function Home() {
                             value={similarityThreshold} 
                             onChange={(e) => setSimilarityThreshold(Number(e.target.value))}
                             className="w-24 md:w-32 accent-blue-600"
+                            aria-label="Similarity threshold"
                           />
                         </div>
                         
-                        <div className="flex items-center gap-2 border-l pl-4 border-gray-200">
+                        <div className="flex items-center gap-2 bg-slate-50 rounded-lg border border-slate-200 px-3 py-2">
                            <label className="flex items-center gap-2 text-sm font-medium text-gray-700 cursor-pointer">
                               <input 
                                 type="checkbox" 
@@ -241,12 +268,13 @@ export default function Home() {
                            </label>
                         </div>
 
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 bg-slate-50 rounded-lg border border-slate-200 px-3 py-2">
                            <ArrowDownUp size={16} className="text-gray-500" />
                            <select 
                              value={sortBy} 
                              onChange={(e) => setSortBy(e.target.value)}
-                             className="text-sm border-gray-300 rounded-md focus:border-blue-500 focus:ring-blue-500 bg-transparent py-1"
+                             className="text-sm border-gray-300 rounded-md focus:border-blue-500 focus:ring-blue-500 bg-white py-1"
+                             aria-label="Sort results"
                            >
                              <option value="date">Newest First</option>
                              <option value="oldest">Oldest First</option>
@@ -256,31 +284,29 @@ export default function Home() {
                         </div>
                      </div>
 
-                        <div className="flex flex-col md:flex-row gap-2 items-center">
+                        <div className="flex flex-col sm:flex-row gap-2 items-stretch sm:items-center">
                            <button 
                              onClick={generateShareUrl}
-                             className="flex items-center gap-2 px-4 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors font-medium text-sm"
+                             className="flex items-center justify-center gap-2 px-4 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors font-medium text-sm"
                            >
                              <Share2 size={16} /> Share Results
                            </button>
                            <button
                              onClick={resetSearch}
-                             className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors text-sm"
+                             className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors text-sm font-medium"
                            >
                              Check another tweet
                            </button>
                         </div>
-                        {shareWarning && (
-                          <div className="text-xs text-red-600 mt-1 md:mt-0 md:ml-4">
-                            {shareWarning}
-                          </div>
-                        )}
+                      </div>
+                      {shareWarning && (
+                        <div className={`text-xs rounded-lg px-3 py-2 border ${isShareSuccess ? 'text-green-700 bg-green-50 border-green-200' : 'text-red-700 bg-red-50 border-red-200'}`}>
+                          {shareWarning}
+                        </div>
+                      )}
                       </div>
 
                   <div className="space-y-4">
-                    {sourceSummary && (
-                      <div className="text-xs text-gray-500 px-1">{sourceSummary}</div>
-                    )}
                     {showDebugPanel && (
                       <div className="text-xs bg-slate-50 border border-slate-200 text-slate-600 rounded-lg p-3">
                         <div className="font-semibold text-slate-700 mb-1">Debug Diagnostics</div>
