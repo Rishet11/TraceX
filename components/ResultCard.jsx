@@ -1,10 +1,23 @@
 import Image from 'next/image';
 import { useEffect, useState } from 'react';
-import { ExternalLink, Heart, MessageCircle, Repeat, Calendar, Sparkles, AlertCircle, Eye, Bookmark } from 'lucide-react';
-import { cn } from '@/lib/utils'; // Assuming cn is available
+import {
+  AlertCircle,
+  Bookmark,
+  Calendar,
+  ExternalLink,
+  Eye,
+  Heart,
+  MessageCircle,
+  Repeat,
+  Sparkles,
+} from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 const DEFAULT_AVATAR = 'https://abs.twimg.com/sticky/default_profile_images/default_profile_normal.png';
-const compactNumber = new Intl.NumberFormat('en', { notation: 'compact', maximumFractionDigits: 1 });
+const compactNumber = new Intl.NumberFormat('en', {
+  notation: 'compact',
+  maximumFractionDigits: 1,
+});
 
 function isValidAnalysisPayload(payload) {
   if (!payload || typeof payload !== 'object') return false;
@@ -14,20 +27,45 @@ function isValidAnalysisPayload(payload) {
   return true;
 }
 
+function sourceLabel(source) {
+  const key = String(source || '').toLowerCase();
+  if (key === 'nitter') return 'Search mirror';
+  if (key === 'duckduckgo') return 'Web discovery';
+  if (key === 'bing') return 'News index';
+  if (key === 'jina' || key === 'jina_status') return 'Archive mirror';
+  if (key === 'syndication') return 'Syndication';
+  return '';
+}
+
 export default function ResultCard({ tweet, similarity, badges, originalText }) {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysis, setAnalysis] = useState(null);
   const [error, setError] = useState(null);
-  const [avatarSrc, setAvatarSrc] = useState(tweet.author.avatar || DEFAULT_AVATAR);
+  const [avatarSrc, setAvatarSrc] = useState(tweet?.author?.avatar || DEFAULT_AVATAR);
 
   useEffect(() => {
-    setAvatarSrc(tweet.author.avatar || DEFAULT_AVATAR);
-  }, [tweet.author.avatar]);
+    setAvatarSrc(tweet?.author?.avatar || DEFAULT_AVATAR);
+  }, [tweet?.author?.avatar]);
 
-  const similarityColor = similarity >= 90 ? 'text-green-600 bg-green-50 border-green-200' :
-    similarity >= 70 ? 'text-yellow-600 bg-yellow-50 border-yellow-200' :
-    'text-gray-600 bg-gray-50 border-gray-200';
-  const formatMetric = (value) => compactNumber.format(Number(value) || 0);
+  const stats = tweet?.stats || {};
+  const similarityColor =
+    similarity >= 90
+      ? 'text-green-700 bg-green-50 border-green-200'
+      : similarity >= 70
+        ? 'text-amber-700 bg-amber-50 border-amber-200'
+        : 'text-slate-700 bg-slate-50 border-slate-200';
+  const formatMetric = (value) => {
+    if (Number.isFinite(value)) return compactNumber.format(value);
+    const raw = String(value ?? '').trim();
+    if (!raw) return '0';
+    if (/^\d+(\.\d+)?\s*[KMB]$/i.test(raw)) {
+      return raw.replace(/\s+/g, '').toUpperCase();
+    }
+    const numeric = Number(raw.replace(/,/g, ''));
+    if (Number.isFinite(numeric)) return compactNumber.format(numeric);
+    return '0';
+  };
+  const source = sourceLabel(tweet?.source);
 
   const handleAnalyze = async () => {
     if (!originalText?.trim()) {
@@ -45,16 +83,15 @@ export default function ResultCard({ tweet, similarity, badges, originalText }) 
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           original: originalText,
-          candidate: tweet.content
-        })
+          candidate: tweet.content,
+        }),
       });
-      
+
       const data = await res.json();
       if (!res.ok) throw new Error(data?.error || 'Analysis failed');
       if (!isValidAnalysisPayload(data)) {
         throw new Error('AI returned an invalid analysis format. Please retry.');
       }
-      
       setAnalysis(data);
     } catch (err) {
       console.error(err);
@@ -65,130 +102,134 @@ export default function ResultCard({ tweet, similarity, badges, originalText }) 
   };
 
   return (
-    <div className="group bg-white rounded-2xl shadow-sm border border-gray-100 p-6 hover:shadow-xl hover:border-gray-200 transition-all duration-300">
-      <div className="flex justify-between items-start mb-4">
-        {/* Author Info */}
-        <div className="flex items-center gap-3">
-          <div className="relative">
+    <article className="surface-card surface-interactive p-5 md:p-6">
+      <header className="flex items-start justify-between gap-3 mb-4">
+        <div className="flex items-center gap-3 min-w-0">
+          <div className="relative shrink-0">
             <Image
-                src={avatarSrc}
-                alt={tweet.author.username || 'avatar'}
-                width={48}
-                height={48}
-                className="w-12 h-12 rounded-full bg-gray-50 object-cover border-2 border-white shadow-sm"
-                unoptimized
-                loader={({ src }) => src}
-                onError={() => setAvatarSrc(DEFAULT_AVATAR)}
+              src={avatarSrc}
+              alt={tweet?.author?.username || 'avatar'}
+              width={52}
+              height={52}
+              className="w-12 h-12 md:w-13 md:h-13 rounded-full bg-slate-50 object-cover border border-slate-200"
+              unoptimized
+              loader={({ src }) => src}
+              onError={() => setAvatarSrc(DEFAULT_AVATAR)}
             />
-            {tweet.source === 'duckduckgo' && (
-                <div className="absolute -bottom-1 -right-1 bg-white rounded-full p-0.5 shadow-sm" title="Found via DuckDuckGo">
-                    <div className="w-4 h-4 rounded-full bg-orange-400" /> 
-                </div>
+          </div>
+          <div className="min-w-0">
+            <div className="font-bold text-slate-900 leading-tight text-lg truncate">
+              {tweet?.author?.fullname || 'Unknown'}
+            </div>
+            <div className="text-slate-500 text-sm truncate">
+              @{String(tweet?.author?.username || 'unknown').replace(/^@+/, '')}
+            </div>
+            {source && (
+              <div className="mt-1 text-[11px] inline-flex items-center px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 border border-slate-200">
+                {source}
+              </div>
             )}
           </div>
-          <div>
-            <div className="font-bold text-gray-900 leading-tight text-lg">{tweet.author.fullname}</div>
-            <div className="text-gray-500 text-sm">@{tweet.author.username}</div>
-          </div>
         </div>
-        
-        {/* Similarity Badge */}
-        <div className={cn("px-3 py-1.5 rounded-full text-sm font-bold border shadow-sm", similarityColor)}>
+
+        <div className={cn('px-3 py-1.5 rounded-full text-sm font-bold border shadow-sm shrink-0', similarityColor)}>
           {similarity}% Match
         </div>
-      </div>
+      </header>
 
-      <p className="text-gray-800 text-lg mb-5 whitespace-pre-wrap leading-relaxed font-normal">
-        {tweet.content}
+      <p className="text-slate-800 text-lg mb-4 whitespace-pre-wrap break-words leading-[1.55]">
+        {tweet?.content || ''}
       </p>
 
-      {/* Badges */}
       {badges && badges.length > 0 && (
-         <div className="flex flex-wrap gap-2 mb-5">
-            {badges.map((badge, index) => (
-            <span key={index} className="px-2.5 py-1 bg-blue-50 text-blue-700 text-xs rounded-lg font-semibold border border-blue-100 tracking-wide uppercase">
-                {badge}
+        <div className="flex flex-wrap gap-2 mb-4">
+          {badges.map((badge, index) => (
+            <span
+              key={index}
+              className="px-2.5 py-1 bg-[var(--brand-50)] text-[var(--brand-600)] text-xs rounded-lg font-semibold border border-[var(--brand-100)] tracking-wide uppercase"
+            >
+              {badge}
             </span>
-            ))}
-         </div>
+          ))}
+        </div>
       )}
 
-      {/* Stats & Actions */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pt-5 border-t border-gray-100 text-gray-500 text-sm">
-        <div className="flex flex-wrap gap-x-4 gap-y-2">
-          <span className="flex items-center gap-1.5 hover:text-blue-500 transition-colors" title="Replies">
-            <MessageCircle size={18} /> <span className="font-medium">{formatMetric(tweet.stats.replies)}</span>
+      <div className="pt-4 border-t border-slate-100 space-y-3">
+        <div className="flex flex-wrap gap-x-4 gap-y-2 text-slate-500 text-sm">
+          <span className="flex items-center gap-1.5" title="Replies">
+            <MessageCircle size={17} />
+            <span className="font-medium">{formatMetric(stats.replies)}</span>
           </span>
-          <span className="flex items-center gap-1.5 hover:text-green-500 transition-colors" title="Retweets">
-            <Repeat size={18} /> <span className="font-medium">{formatMetric(tweet.stats.retweets)}</span>
+          <span className="flex items-center gap-1.5" title="Retweets">
+            <Repeat size={17} />
+            <span className="font-medium">{formatMetric(stats.retweets)}</span>
           </span>
-          <span className="flex items-center gap-1.5 hover:text-pink-500 transition-colors" title="Likes">
-            <Heart size={18} /> <span className="font-medium">{formatMetric(tweet.stats.likes)}</span>
+          <span className="flex items-center gap-1.5" title="Likes">
+            <Heart size={17} />
+            <span className="font-medium">{formatMetric(stats.likes)}</span>
           </span>
-          <span className="flex items-center gap-1.5 hover:text-slate-600 transition-colors" title="Views">
-            <Eye size={18} /> <span className="font-medium">{formatMetric(tweet.stats?.views)}</span>
+          <span className="flex items-center gap-1.5" title="Views">
+            <Eye size={17} />
+            <span className="font-medium">{formatMetric(stats.views)}</span>
           </span>
-          <span className="flex items-center gap-1.5 hover:text-amber-600 transition-colors" title="Bookmarks">
-            <Bookmark size={18} /> <span className="font-medium">{formatMetric(tweet.stats?.bookmarks)}</span>
+          <span className="flex items-center gap-1.5" title="Bookmarks">
+            <Bookmark size={17} />
+            <span className="font-medium">{formatMetric(stats.bookmarks)}</span>
           </span>
         </div>
-        
+
         <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-           {/* AI Analysis Button */}
-           {!analysis && !isAnalyzing && (
-             <button
-               onClick={handleAnalyze}
-               className="flex items-center gap-1.5 text-violet-600 hover:text-violet-800 hover:bg-violet-50 px-3 py-1.5 rounded-lg font-medium transition-all text-xs border border-transparent hover:border-violet-100"
-               disabled={isAnalyzing}
-             >
-                <Sparkles size={14} /> Analyze with AI
-             </button>
-           )}
-           
-           <span className="flex items-center gap-1.5 text-gray-400">
-             <Calendar size={16} /> {tweet.relativeDate}
-           </span>
-           <a 
-             href={tweet.url} 
-             target="_blank" 
-             rel="noopener noreferrer"
-             className="flex items-center gap-1.5 text-gray-900 bg-gray-100 hover:bg-gray-200 px-3 py-1.5 rounded-lg font-medium transition-all text-xs"
-           >
-             View Tweet <ExternalLink size={14} />
-           </a>
+          {!analysis && !isAnalyzing && (
+            <button
+              onClick={handleAnalyze}
+              className="flex items-center gap-1.5 text-violet-700 hover:text-violet-900 hover:bg-violet-50 px-3 py-1.5 rounded-lg font-medium transition-all text-xs border border-transparent hover:border-violet-100"
+              disabled={isAnalyzing}
+            >
+              <Sparkles size={14} /> Analyze with AI
+            </button>
+          )}
+
+          <span className="flex items-center gap-1.5 text-slate-400 text-xs">
+            <Calendar size={15} /> {tweet?.relativeDate || 'Recently found'}
+          </span>
+          <a
+            href={tweet?.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-1.5 text-slate-900 bg-slate-100 hover:bg-slate-200 px-3 py-1.5 rounded-lg font-medium transition-all text-xs"
+          >
+            View Tweet <ExternalLink size={14} />
+          </a>
         </div>
       </div>
-      
-      {/* Analysis Result */}
+
       {isAnalyzing && (
-        <div className="mt-4 p-4 bg-violet-50 rounded-xl border border-violet-100 animate-pulse flex items-center gap-3">
-            <Sparkles className="text-violet-500 animate-spin-slow" size={20} />
-            <span className="text-violet-700 font-medium">Gemini AI is analyzing similarity...</span>
+        <div className="mt-4 p-3 bg-violet-50 rounded-xl border border-violet-100 animate-pulse flex items-center gap-3">
+          <Sparkles className="text-violet-500" size={18} />
+          <span className="text-violet-700 font-medium text-sm">Analyzing similarity with AI...</span>
         </div>
       )}
 
       {error && (
-        <div className="mt-4 p-3 bg-red-50 text-red-600 rounded-lg text-sm border border-red-100 flex items-center gap-2">
-           <AlertCircle size={16} /> {error}
+        <div className="mt-4 p-3 bg-[var(--danger-50)] text-[var(--danger-600)] rounded-lg text-sm border border-red-100 flex items-center gap-2">
+          <AlertCircle size={16} /> {error}
         </div>
       )}
 
       {analysis && (
-        <div className="mt-4 bg-gradient-to-br from-violet-50 to-indigo-50 rounded-xl border border-violet-100 p-5 animate-in fade-in slide-in-from-top-2">
-            <div className="flex items-center justify-between mb-2">
-                <h4 className="font-bold text-violet-900 flex items-center gap-2">
-                    <Sparkles size={18} className="text-violet-600" />
-                    AI Verdict: {analysis.verdict}
-                </h4>
-                <span className="bg-white text-violet-700 px-2 py-1 rounded-md text-xs font-bold border border-violet-100 shadow-sm">
-                    {analysis.score}/100 Confidence
-                </span>
-            </div>
-            <p className="text-violet-800 text-sm leading-relaxed">
-                {analysis.explanation}
-            </p>
+        <div className="mt-4 bg-violet-50 rounded-xl border border-violet-100 p-4">
+          <div className="flex flex-wrap items-center justify-between mb-2 gap-2">
+            <h4 className="font-bold text-violet-900 flex items-center gap-2">
+              <Sparkles size={16} className="text-violet-600" />
+              AI Verdict: {analysis.verdict}
+            </h4>
+            <span className="bg-white text-violet-700 px-2 py-1 rounded-md text-xs font-bold border border-violet-100 shadow-sm">
+              {analysis.score}/100 Confidence
+            </span>
+          </div>
+          <p className="text-violet-900/90 text-sm leading-relaxed">{analysis.explanation}</p>
         </div>
       )}
-    </div>
+    </article>
   );
 }

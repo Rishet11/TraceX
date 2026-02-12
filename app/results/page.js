@@ -1,10 +1,27 @@
 'use client';
 
-import { useMemo, Suspense } from 'react';
-import { useSearchParams, useRouter } from 'next/navigation';
-import ResultCard from '@/components/ResultCard';
-import { decodeShareData } from '@/lib/urlEncoder';
+import { Suspense, useMemo } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { ArrowLeft } from 'lucide-react';
+import ResultCard from '@/components/ResultCard';
+import AppHeader from '@/components/AppHeader';
+import AppFooter from '@/components/AppFooter';
+import { decodeShareData } from '@/lib/urlEncoder';
+
+function parseMetricValue(value) {
+  if (Number.isFinite(value)) return Number(value);
+  const raw = String(value ?? '').replace(/,/g, '').trim();
+  if (!raw) return 0;
+  const match = raw.match(/^(\d+(?:\.\d+)?)\s*([KMB])?$/i);
+  if (!match) return 0;
+  const num = Number(match[1]);
+  if (!Number.isFinite(num)) return 0;
+  const unit = (match[2] || '').toUpperCase();
+  if (unit === 'K') return Math.round(num * 1000);
+  if (unit === 'M') return Math.round(num * 1000000);
+  if (unit === 'B') return Math.round(num * 1000000000);
+  return Math.round(num);
+}
 
 function ResultsContent() {
   const searchParams = useSearchParams();
@@ -12,9 +29,7 @@ function ResultsContent() {
 
   const { results, query } = useMemo(() => {
     const data = searchParams.get('data');
-    if (!data) {
-      return { results: [], query: '' };
-    }
+    if (!data) return { results: [], query: '' };
     const decoded = decodeShareData(data);
     if (decoded && Array.isArray(decoded.r)) {
       return { results: decoded.r, query: decoded.q || '' };
@@ -26,12 +41,13 @@ function ResultsContent() {
   const processedData = useMemo(() => {
     const normalized = results.map((tweet) => {
       const similarityScore = Number(tweet.score ?? tweet.similarityScore ?? 0);
-      const parsedDate = Number.isFinite(Date.parse(tweet.date)) ? Date.parse(tweet.date) : null;
+      const parsedDateValue = Date.parse(tweet.date);
+      const parsedDate = Number.isFinite(parsedDateValue) ? parsedDateValue : null;
       const engagement =
         Number(tweet?.engagement) ||
-        (Number(tweet?.stats?.likes) || 0) +
-          (Number(tweet?.stats?.retweets) || 0) +
-          (Number(tweet?.stats?.replies) || 0);
+        parseMetricValue(tweet?.stats?.likes) +
+          parseMetricValue(tweet?.stats?.retweets) +
+          parseMetricValue(tweet?.stats?.replies);
       const tweetIdMatch = String(tweet.url || '').match(/status\/(\d+)/);
 
       return {
@@ -53,10 +69,12 @@ function ResultsContent() {
           : engagements[mid];
     const viralThreshold = medianEngagement > 0 ? medianEngagement * 10 : Infinity;
 
-    const oldestTweet = normalized.filter((r) => r.parsedDate != null).reduce((prev, curr) => {
-      if (!prev) return curr;
-      return (curr.parsedDate ?? Infinity) < (prev.parsedDate ?? Infinity) ? curr : prev;
-    }, null);
+    const oldestTweet = normalized
+      .filter((r) => r.parsedDate != null)
+      .reduce((prev, curr) => {
+        if (!prev) return curr;
+        return (curr.parsedDate ?? Infinity) < (prev.parsedDate ?? Infinity) ? curr : prev;
+      }, null);
 
     return {
       normalized,
@@ -66,55 +84,62 @@ function ResultsContent() {
   }, [results]);
 
   return (
-    <div className="max-w-3xl mx-auto w-full space-y-8">
-       <div className="flex items-center gap-4 mb-6">
-          <button 
-            onClick={() => router.push('/')}
-            className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors"
-          >
-            <ArrowLeft size={20} /> Back to Search
-          </button>
-       </div>
+    <div className="app-container space-y-5">
+      <button
+        onClick={() => router.push('/')}
+        className="inline-flex items-center gap-2 text-sm text-slate-600 hover:text-slate-900 transition-colors px-3 py-2 rounded-lg bg-white border border-[var(--border)]"
+      >
+        <ArrowLeft size={18} /> Back to Search
+      </button>
 
-       <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-          <h2 className="text-xl font-bold text-gray-900 mb-2">Shared Search Results</h2>
-          <p className="text-gray-600">Original Query: <span className="font-medium">&quot;{query}&quot;</span></p>
-          <p className="text-sm text-gray-500 mt-1">Found {processedData.normalized.length} matches</p>
-       </div>
+      <section className="surface-card p-5 md:p-6">
+        <h1 className="text-section-title text-slate-900">Shared Search Results</h1>
+        <p className="mt-2 text-slate-600">
+          Original query: <span className="font-medium text-slate-900">&quot;{query || 'N/A'}&quot;</span>
+        </p>
+        <p className="text-sm text-slate-500 mt-1">Found {processedData.normalized.length} matches</p>
+      </section>
 
-       <div className="space-y-4">
-          {processedData.normalized.map((tweet, i) => {
-            const badges = [];
-            if (tweet.similarityScore === 100) badges.push('💯 EXACT MATCH');
-            if (processedData.oldestTweetId && tweet.tweetId === processedData.oldestTweetId) badges.push('⭐ OLDEST');
-            if ((tweet.engagement || 0) >= processedData.viralThreshold) badges.push('🔥 VIRAL');
+      <section className="space-y-4">
+        {processedData.normalized.map((tweet, i) => {
+          const badges = [];
+          if (tweet.similarityScore === 100) badges.push('💯 EXACT MATCH');
+          if (processedData.oldestTweetId && tweet.tweetId === processedData.oldestTweetId) {
+            badges.push('⭐ OLDEST');
+          }
+          if ((tweet.engagement || 0) >= processedData.viralThreshold) badges.push('🔥 VIRAL');
 
-            return (
-              <ResultCard
-                key={tweet.tweetId || i}
-                tweet={tweet}
-                similarity={tweet.similarityScore}
-                badges={badges}
-              />
-            );
-          })}
-       </div>
-       
-       {processedData.normalized.length === 0 && (
-          <div className="text-center py-10 text-gray-500">
-             No results found in this shared link.
+          return (
+            <ResultCard
+              key={tweet.tweetId || i}
+              tweet={tweet}
+              similarity={tweet.similarityScore}
+              badges={badges}
+              originalText={query}
+            />
+          );
+        })}
+
+        {processedData.normalized.length === 0 && (
+          <div className="surface-card text-center py-10 text-slate-500">
+            No results found in this shared link.
           </div>
-       )}
+        )}
+      </section>
     </div>
   );
 }
 
 export default function ResultsPage() {
   return (
-    <main className="min-h-screen bg-gray-50 flex flex-col py-10 px-4 md:px-0">
-       <Suspense fallback={<div>Loading...</div>}>
+    <div className="min-h-screen flex flex-col">
+      <AppHeader />
+      <main className="flex-1 page-section">
+        <Suspense fallback={<div className="app-container text-slate-500">Loading shared results...</div>}>
           <ResultsContent />
-       </Suspense>
-    </main>
+        </Suspense>
+      </main>
+      <AppFooter />
+    </div>
   );
 }
