@@ -115,7 +115,7 @@ export default function ResultCard({ tweet, similarity, badges, originalText }) 
 
       {/* Stats & Actions */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pt-5 border-t border-gray-100 text-gray-500 text-sm">
-        <div className="flex gap-6">
+        <div className="flex flex-wrap gap-x-4 gap-y-2">
           <span className="flex items-center gap-1.5 hover:text-blue-500 transition-colors" title="Replies">
             <MessageCircle size={18} /> <span className="font-medium">{formatMetric(tweet.stats.replies)}</span>
           </span>

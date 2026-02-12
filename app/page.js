@@ -47,11 +47,18 @@ export default function Home() {
         body: JSON.stringify({ query: searchText, ...normalizedOptions }),
       });
 
-      const data = await response.json();
+      let data = {};
+      try {
+        data = await response.json();
+      } catch {
+        data = {};
+      }
       
       if (!response.ok) {
         setSearchMeta(data.meta || null);
-        throw new Error(data.error || 'Search failed');
+        setResults([]);
+        setSearchStatus('error');
+        return;
       }
 
       // Calculate similarity for all results immediately
@@ -73,7 +80,7 @@ export default function Home() {
       setSearchStatus('success');
       setShareWarning('');
     } catch (error) {
-      console.error('Search error:', error);
+      console.error('Unexpected search request error:', error);
       setResults([]);
       setSearchStatus('error');
     } finally {
@@ -191,6 +198,7 @@ export default function Home() {
   const totalMatches = results.length;
   const visibleMatches = processedData.sorted.length;
   const isShareSuccess = shareWarning.toLowerCase().includes('copied');
+  const searchModeLabel = lastSearchOptions?.queryInputType === 'url_text_extracted' ? 'URL mode' : 'Text mode';
 
   const resetSearch = () => {
     setQuery('');
@@ -218,6 +226,17 @@ export default function Home() {
 
         {searchStatus !== 'idle' && (
            <div className="space-y-6">
+              {(searchStatus === 'success' || searchStatus === 'error') && query && (
+                <div className="bg-white border border-gray-100 rounded-xl px-4 py-3 text-sm flex flex-col md:flex-row md:items-center md:justify-between gap-2">
+                  <div className="text-gray-700">
+                    <span className="font-semibold">Search:</span> “{query.slice(0, 120)}{query.length > 120 ? '...' : ''}”
+                  </div>
+                  <div className="inline-flex items-center text-xs px-2 py-1 rounded-full bg-slate-100 text-slate-700 font-medium w-fit">
+                    {searchModeLabel}
+                  </div>
+                </div>
+              )}
+
               {searchStatus === 'loading' && (
                 <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 text-center">
                   <p className="text-gray-600 font-medium">Searching across sources and ranking matches...</p>
@@ -226,7 +245,7 @@ export default function Home() {
 
               {searchStatus === 'success' && results.length > 0 && (
                 <>
-                    <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 space-y-4">
+                    <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 space-y-4 sticky top-3 z-10 backdrop-blur-sm">
                       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
                         <div className="flex items-center gap-2 text-sm">
                           <span className="inline-flex items-center px-2.5 py-1 rounded-full bg-slate-100 text-slate-700 font-semibold">
@@ -333,8 +352,14 @@ export default function Home() {
                       </div>
                     )}
                     {processedData.sorted.length === 0 ? (
-                      <div className="text-center py-10 text-gray-500">
-                        No results match your filters.
+                      <div className="text-center py-10 text-gray-500 bg-white rounded-xl border border-gray-100">
+                        <p>No results match your filters.</p>
+                        <button
+                          onClick={() => setSimilarityThreshold(80)}
+                          className="mt-3 text-sm px-4 py-2 bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200 transition-colors font-medium"
+                        >
+                          Reset similarity to 80%
+                        </button>
                       </div>
                     ) : (
                       processedData.sorted.map((tweet, i) => {
@@ -364,7 +389,7 @@ export default function Home() {
                     <p className="text-gray-600 max-w-md mx-auto">
                         We could not find matching tweets for this query right now.
                     </p>
-                    <div className="pt-2">
+                    <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-2">
                       <a
                         href={`https://x.com/search?q=${encodeURIComponent('"' + query + '"')}&f=live`}
                         target="_blank"
@@ -373,6 +398,12 @@ export default function Home() {
                       >
                         Try on X
                       </a>
+                      <button
+                        onClick={resetSearch}
+                        className="inline-flex items-center px-5 py-2.5 bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200 transition-colors font-medium text-sm"
+                      >
+                        Check another tweet
+                      </button>
                     </div>
                     {diagnosticsText && (
                       <p className="text-xs text-gray-500 pt-1">{diagnosticsText}</p>
@@ -389,22 +420,30 @@ export default function Home() {
                           ? 'Search sources are temporarily degraded or rate-limited. Retry in a few seconds, or use manual X search.'
                           : 'Nitter instances are currently unavailable or blocking requests. Please try manually searching on X.'}
                     </p>
-                    {isDegradedSources && (
-                      <button
-                        onClick={() => handleSearch(query, lastSearchOptions)}
-                        className="inline-flex items-center px-5 py-2.5 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors font-medium text-sm"
+                    <div className="flex flex-col sm:flex-row items-center justify-center gap-2">
+                      {isDegradedSources && (
+                        <button
+                          onClick={() => handleSearch(query, lastSearchOptions)}
+                          className="inline-flex items-center px-5 py-2.5 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors font-medium text-sm"
+                        >
+                          Retry Search
+                        </button>
+                      )}
+                      <a 
+                          href={`https://x.com/search?q=${encodeURIComponent('"' + query + '"')}&f=live`} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center px-6 py-3 bg-black text-white rounded-lg hover:bg-gray-800 transition-colors font-medium"
                       >
-                        Retry Search
+                          Search on X for &quot;{query.slice(0, 20)}...&quot;
+                      </a>
+                      <button
+                        onClick={resetSearch}
+                        className="inline-flex items-center px-5 py-2.5 bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200 transition-colors font-medium text-sm"
+                      >
+                        Start Over
                       </button>
-                    )}
-                    <a 
-                        href={`https://x.com/search?q=${encodeURIComponent('"' + query + '"')}&f=live`} 
-                        target="_blank" 
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center px-6 py-3 bg-black text-white rounded-lg hover:bg-gray-800 transition-colors font-medium"
-                    >
-                        Search on X for &quot;{query.slice(0, 20)}...&quot;
-                    </a>
+                    </div>
                 </div>
               )}
            </div>
