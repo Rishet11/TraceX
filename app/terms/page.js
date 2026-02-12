@@ -1,11 +1,57 @@
+import Link from 'next/link';
+import AppHeader from '@/components/AppHeader';
+import AppFooter from '@/components/AppFooter';
+
 export default function TermsPage() {
   return (
-    <main className="min-h-screen bg-gray-50 px-4 py-10">
-      <div className="max-w-3xl mx-auto bg-white border border-gray-200 rounded-2xl p-6 space-y-4">
-        <h1 className="text-3xl font-extrabold text-slate-900">Terms of Service</h1>
-        <p className="text-slate-600">Use this tool responsibly and in compliance with platform rules and local laws.</p>
-        <p className="text-slate-600">The service is provided as-is, without guaranteed uptime or coverage.</p>
-      </div>
-    </main>
+    <div className="min-h-screen flex flex-col">
+      <AppHeader />
+      <main className="flex-1 page-section">
+        <div className="app-container space-y-6">
+          <section className="surface-elevated px-6 py-8 md:p-10 space-y-2">
+            <h1 className="text-hero text-slate-900">Terms of Service</h1>
+            <p className="text-helper max-w-2xl">
+              By using this service, you agree to use it responsibly and follow platform rules and
+              local laws.
+            </p>
+          </section>
+
+          <section className="surface-card p-6 space-y-5 text-sm text-slate-700">
+            <div>
+              <h2 className="text-lg font-bold text-slate-900">Use of service</h2>
+              <p className="mt-1">
+                You may use this tool to discover likely copied tweets and review public content. Do
+                not use it for harassment, abuse, or unlawful activity.
+              </p>
+            </div>
+
+            <div>
+              <h2 className="text-lg font-bold text-slate-900">Availability</h2>
+              <p className="mt-1">
+                Search coverage can vary by source availability. We do not guarantee uninterrupted
+                uptime or complete recall for every query.
+              </p>
+            </div>
+
+            <div>
+              <h2 className="text-lg font-bold text-slate-900">Payments and subscriptions</h2>
+              <p className="mt-1">
+                Paid plans are billed through Lemon Squeezy. Subscription terms, renewals, and
+                invoicing are managed in your billing portal.
+              </p>
+            </div>
+
+            <div>
+              <h2 className="text-lg font-bold text-slate-900">Questions</h2>
+              <p className="mt-1">
+                Contact us via the <Link href="/contact" className="underline">support page</Link> for
+                account or billing questions.
+              </p>
+            </div>
+          </section>
+        </div>
+      </main>
+      <AppFooter />
+    </div>
   );
 }

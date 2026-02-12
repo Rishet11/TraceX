@@ -1,11 +1,50 @@
+import { Mail, MessageSquare } from 'lucide-react';
+import AppHeader from '@/components/AppHeader';
+import AppFooter from '@/components/AppFooter';
+
 export default function ContactPage() {
   return (
-    <main className="min-h-screen bg-gray-50 px-4 py-10">
-      <div className="max-w-3xl mx-auto bg-white border border-gray-200 rounded-2xl p-6 space-y-4">
-        <h1 className="text-3xl font-extrabold text-slate-900">Contact</h1>
-        <p className="text-slate-600">For support, billing questions, or feature requests:</p>
-        <p className="text-slate-900 font-medium">support@yourdomain.com</p>
-      </div>
-    </main>
+    <div className="min-h-screen flex flex-col">
+      <AppHeader />
+      <main className="flex-1 page-section">
+        <div className="app-container space-y-6">
+          <section className="surface-elevated px-6 py-8 md:p-10 space-y-2">
+            <h1 className="text-hero text-slate-900">Contact support</h1>
+            <p className="text-helper max-w-2xl">
+              Questions about billing, product bugs, or feature requests? Reach us directly.
+            </p>
+          </section>
+
+          <section className="surface-card p-6 space-y-4">
+            <div className="flex items-start gap-3">
+              <Mail className="text-slate-500 mt-0.5" size={18} />
+              <div>
+                <h2 className="text-lg font-bold text-slate-900">Email</h2>
+                <p className="text-sm text-slate-600 mt-1">
+                  For support and billing help, write to:
+                </p>
+                <a
+                  href="mailto:support@yourdomain.com"
+                  className="text-slate-900 font-semibold hover:underline"
+                >
+                  support@yourdomain.com
+                </a>
+              </div>
+            </div>
+
+            <div className="flex items-start gap-3">
+              <MessageSquare className="text-slate-500 mt-0.5" size={18} />
+              <div>
+                <h2 className="text-lg font-bold text-slate-900">What to include</h2>
+                <p className="text-sm text-slate-600 mt-1">
+                  Include your account email and a short description so we can resolve issues faster.
+                </p>
+              </div>
+            </div>
+          </section>
+        </div>
+      </main>
+      <AppFooter />
+    </div>
   );
 }
