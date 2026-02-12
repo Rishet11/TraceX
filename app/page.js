@@ -146,8 +146,9 @@ export default function Home() {
     const tried = searchMeta?.variantsTried?.length || 0;
     const nitterAttempts = searchMeta?.sources?.nitter?.attempts || 0;
     const ddgAttempts = searchMeta?.sources?.duckduckgo?.attempts || 0;
+    const bingAttempts = searchMeta?.sources?.bing?.attempts || 0;
     if (!tried) return '';
-    return `Tried ${tried} query variant${tried === 1 ? '' : 's'} across ${nitterAttempts} Nitter and ${ddgAttempts} DuckDuckGo attempt${ddgAttempts === 1 ? '' : 's'}.`;
+    return `Tried ${tried} query variant${tried === 1 ? '' : 's'} across ${nitterAttempts} Nitter, ${ddgAttempts} DuckDuckGo, and ${bingAttempts} Bing attempt${bingAttempts === 1 ? '' : 's'}.`;
   }, [searchMeta]);
 
   const sourceSummary = useMemo(() => {
@@ -155,11 +156,15 @@ export default function Home() {
     const available = [];
     const nitter = searchMeta.sources.nitter;
     const ddg = searchMeta.sources.duckduckgo;
+    const bing = searchMeta.sources.bing;
     if (nitter?.attempts > nitter?.failures) available.push('Nitter');
     if (ddg?.attempts > ddg?.failures) available.push('DuckDuckGo');
+    if (bing?.attempts > bing?.failures) available.push('Bing RSS');
     if (available.length === 0) return '';
     return `Found using ${available.join(' + ')}`;
   }, [searchMeta]);
+
+  const showDebugPanel = process.env.NODE_ENV !== 'production' && searchMeta;
 
   const resetSearch = () => {
     setQuery('');
@@ -252,6 +257,28 @@ export default function Home() {
                   <div className="space-y-4">
                     {sourceSummary && (
                       <div className="text-xs text-gray-500 px-1">{sourceSummary}</div>
+                    )}
+                    {showDebugPanel && (
+                      <div className="text-xs bg-slate-50 border border-slate-200 text-slate-600 rounded-lg p-3">
+                        <div className="font-semibold text-slate-700 mb-1">Debug Diagnostics</div>
+                        <div>Reason: {searchMeta.reason}</div>
+                        <div>
+                          Sources:
+                          {' '}
+                          Nitter {searchMeta?.sources?.nitter?.attempts || 0}/{searchMeta?.sources?.nitter?.failures || 0} fail,
+                          {' '}
+                          DDG {searchMeta?.sources?.duckduckgo?.attempts || 0}/{searchMeta?.sources?.duckduckgo?.failures || 0} fail,
+                          {' '}
+                          Bing {searchMeta?.sources?.bing?.attempts || 0}/{searchMeta?.sources?.bing?.failures || 0} fail
+                        </div>
+                        <div>
+                          Excluded: {searchMeta.excludedCount || 0}
+                          {' · '}
+                          Metrics Enriched: {searchMeta.metricsEnriched || 0}
+                          {' · '}
+                          Variants: {searchMeta?.variantsTried?.length || 0}
+                        </div>
+                      </div>
                     )}
                     {processedData.sorted.length === 0 ? (
                       <div className="text-center py-10 text-gray-500">
