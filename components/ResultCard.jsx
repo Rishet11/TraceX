@@ -1,6 +1,9 @@
-import { useState } from 'react';
+import Image from 'next/image';
+import { useEffect, useState } from 'react';
 import { ExternalLink, Heart, MessageCircle, Repeat, Calendar, Sparkles, AlertCircle } from 'lucide-react';
 import { cn } from '@/lib/utils'; // Assuming cn is available
+
+const DEFAULT_AVATAR = 'https://abs.twimg.com/sticky/default_profile_images/default_profile_normal.png';
 
 function isValidAnalysisPayload(payload) {
   if (!payload || typeof payload !== 'object') return false;
@@ -14,6 +17,11 @@ export default function ResultCard({ tweet, similarity, badges, originalText }) 
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysis, setAnalysis] = useState(null);
   const [error, setError] = useState(null);
+  const [avatarSrc, setAvatarSrc] = useState(tweet.author.avatar || DEFAULT_AVATAR);
+
+  useEffect(() => {
+    setAvatarSrc(tweet.author.avatar || DEFAULT_AVATAR);
+  }, [tweet.author.avatar]);
 
   const similarityColor = similarity >= 90 ? 'text-green-600 bg-green-50 border-green-200' :
     similarity >= 70 ? 'text-yellow-600 bg-yellow-50 border-yellow-200' :
@@ -60,11 +68,15 @@ export default function ResultCard({ tweet, similarity, badges, originalText }) 
         {/* Author Info */}
         <div className="flex items-center gap-3">
           <div className="relative">
-            <img 
-                src={tweet.author.avatar || 'https://abs.twimg.com/sticky/default_profile_images/default_profile_normal.png'} 
-                alt={tweet.author.username}
+            <Image
+                src={avatarSrc}
+                alt={tweet.author.username || 'avatar'}
+                width={48}
+                height={48}
                 className="w-12 h-12 rounded-full bg-gray-50 object-cover border-2 border-white shadow-sm"
-                onError={(e) => { e.target.src = 'https://abs.twimg.com/sticky/default_profile_images/default_profile_normal.png' }} 
+                unoptimized
+                loader={({ src }) => src}
+                onError={() => setAvatarSrc(DEFAULT_AVATAR)}
             />
             {tweet.source === 'duckduckgo' && (
                 <div className="absolute -bottom-1 -right-1 bg-white rounded-full p-0.5 shadow-sm" title="Found via DuckDuckGo">
