@@ -6,12 +6,18 @@ import ResultCard from '@/components/ResultCard'; // I'll use list directly or m
 import { calculateSimilarity } from '@/lib/similarity';
 import { withQualityScores } from '@/lib/ranking';
 import { encodeShareData } from '@/lib/urlEncoder';
-import { Share2, ArrowDownUp, Filter } from 'lucide-react';
+import { Share2, ArrowDownUp, Filter, Sparkles, Clock3, ShieldCheck } from 'lucide-react';
 
 const LOADING_MESSAGES = [
   'Searching for similar tweets...',
   'Checking multiple places for matches...',
   'Ranking the best results for you...',
+];
+
+const QUICK_EXAMPLES = [
+  'just setting up my twttr',
+  "name a career that ai can't replace",
+  'build in public',
 ];
 
 export default function Home() {
@@ -233,14 +239,61 @@ export default function Home() {
     <main className="min-h-screen bg-gray-50 flex flex-col py-8 px-4 md:px-0">
       <div className="max-w-4xl mx-auto w-full space-y-6">
         <div className="text-center space-y-3">
-          <div className="inline-flex items-center rounded-full bg-blue-50 border border-blue-100 px-3 py-1 text-xs font-semibold text-blue-700 tracking-wide">
-            Search + Similarity + AI Verdict
+          <div className="inline-flex items-center rounded-full bg-blue-50 border border-blue-100 px-3 py-1 text-xs font-semibold text-blue-700 tracking-wide gap-1.5">
+            <Sparkles size={14} />
+            Find copied tweets in under a minute
           </div>
           <h1 className="text-4xl md:text-5xl font-extrabold text-slate-900 tracking-tight">Tweet Copy Detector</h1>
-          <p className="text-slate-600 max-w-2xl mx-auto">Paste tweet text or a tweet URL to find likely copies, then filter by similarity and engagement.</p>
+          <p className="text-slate-600 max-w-2xl mx-auto">Paste tweet text or a tweet URL, see likely copies ranked by match quality, and generate evidence instantly.</p>
+          <div className="flex flex-wrap justify-center items-center gap-2 text-xs text-slate-600 pt-1">
+            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-white border border-slate-200">
+              <Clock3 size={13} />
+              No signup required
+            </span>
+            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-white border border-slate-200">
+              <ShieldCheck size={13} />
+              URL + text support
+            </span>
+            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-white border border-slate-200">
+              <Sparkles size={13} />
+              AI verdict on demand
+            </span>
+          </div>
         </div>
 
         <SearchInput onSearch={handleSearch} isLoading={loading} />
+
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 md:p-5 space-y-3">
+          <div className="text-sm font-semibold text-slate-800">Try a sample search</div>
+          <div className="flex flex-wrap gap-2">
+            {QUICK_EXAMPLES.map((example) => (
+              <button
+                key={example}
+                onClick={() => handleSearch(example, { queryInputType: 'text' })}
+                className="text-sm px-3 py-2 rounded-lg bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors"
+              >
+                {example}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {searchStatus === 'idle' && (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <div className="bg-white rounded-xl border border-gray-100 p-4 shadow-sm">
+              <div className="text-sm font-semibold text-slate-900 mb-1">1. Paste tweet text or URL</div>
+              <p className="text-sm text-slate-600">Drop in original content you want to track.</p>
+            </div>
+            <div className="bg-white rounded-xl border border-gray-100 p-4 shadow-sm">
+              <div className="text-sm font-semibold text-slate-900 mb-1">2. Review ranked matches</div>
+              <p className="text-sm text-slate-600">Filter by similarity and quickly spot likely copies.</p>
+            </div>
+            <div className="bg-white rounded-xl border border-gray-100 p-4 shadow-sm">
+              <div className="text-sm font-semibold text-slate-900 mb-1">3. Analyze and share proof</div>
+              <p className="text-sm text-slate-600">Use AI verdict and copy a shareable results link.</p>
+            </div>
+          </div>
+        )}
 
         {searchStatus !== 'idle' && (
            <div className="space-y-6">
