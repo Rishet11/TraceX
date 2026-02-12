@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useMemo, useEffect } from 'react';
+import Link from 'next/link';
 import SearchInput from '@/components/SearchInput';
 import ResultCard from '@/components/ResultCard'; // I'll use list directly or map here
 import { calculateSimilarity } from '@/lib/similarity';
@@ -258,6 +259,14 @@ export default function Home() {
               <Sparkles size={13} />
               AI verdict on demand
             </span>
+          </div>
+          <div className="flex justify-center gap-3 text-sm pt-1">
+            <Link href="/pricing" className="px-4 py-2 rounded-lg bg-slate-900 text-white font-semibold hover:bg-black transition-colors">
+              View Pricing
+            </Link>
+            <Link href="/account" className="px-4 py-2 rounded-lg bg-white border border-slate-200 text-slate-700 font-semibold hover:bg-slate-50 transition-colors">
+              Account
+            </Link>
           </div>
         </div>
 
@@ -555,6 +564,13 @@ export default function Home() {
               )}
            </div>
         )}
+
+        <footer className="pt-4 pb-2 text-center text-xs text-slate-500 space-x-3">
+          <Link href="/terms" className="hover:underline">Terms</Link>
+          <Link href="/privacy" className="hover:underline">Privacy</Link>
+          <Link href="/contact" className="hover:underline">Contact</Link>
+          <Link href="/pricing" className="hover:underline">Pricing</Link>
+        </footer>
       </div>
     </main>
   );
