@@ -1,4 +1,4 @@
-const fetch = require('node-fetch'); // Ensure node-fetch is available or use native fetch in Node 18+
+import fetch from 'node-fetch';
 
 const BEARER_TOKEN = 'AAAAAAAAAAAAAAAAAAAAANRILgAAAAAAnNwIzUejRCOuH5E6I8xnZz4puTs%3D1Zv7ttfk8LF81IUq16cHjhLTvJu4FA33AGWWjCpTnA';
 
