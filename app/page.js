@@ -1,12 +1,18 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import SearchInput from '@/components/SearchInput';
 import ResultCard from '@/components/ResultCard'; // I'll use list directly or map here
 import { calculateSimilarity } from '@/lib/similarity';
 import { withQualityScores } from '@/lib/ranking';
 import { encodeShareData } from '@/lib/urlEncoder';
 import { Share2, ArrowDownUp, Filter } from 'lucide-react';
+
+const LOADING_MESSAGES = [
+  'Searching for similar tweets...',
+  'Checking multiple places for matches...',
+  'Ranking the best results for you...',
+];
 
 export default function Home() {
   const [query, setQuery] = useState('');
@@ -21,6 +27,18 @@ export default function Home() {
   const [similarityThreshold, setSimilarityThreshold] = useState(80);
   const [hideRetweets, setHideRetweets] = useState(false);
   const [sortBy, setSortBy] = useState('date'); // 'date', 'similarity', 'engagement'
+  const [loadingStep, setLoadingStep] = useState(0);
+
+  useEffect(() => {
+    if (!loading) {
+      setLoadingStep(0);
+      return;
+    }
+    const interval = setInterval(() => {
+      setLoadingStep((prev) => (prev + 1) % LOADING_MESSAGES.length);
+    }, 1400);
+    return () => clearInterval(interval);
+  }, [loading]);
 
   const handleSearch = async (searchText, options = {}) => {
     const normalizedOptions = {
@@ -238,8 +256,44 @@ export default function Home() {
               )}
 
               {searchStatus === 'loading' && (
-                <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 text-center">
-                  <p className="text-gray-600 font-medium">Searching across sources and ranking matches...</p>
+                <div className="space-y-4">
+                  <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 text-center space-y-3">
+                    <p className="text-gray-700 font-semibold">{LOADING_MESSAGES[loadingStep]}</p>
+                    <div className="flex justify-center gap-1.5">
+                      {LOADING_MESSAGES.map((_, idx) => (
+                        <span
+                          key={idx}
+                          className={`h-2.5 w-2.5 rounded-full transition-all ${idx === loadingStep ? 'bg-blue-500 scale-110' : 'bg-slate-300'}`}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                  <div className="space-y-3">
+                    {[1, 2, 3].map((item) => (
+                      <div key={item} className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm animate-pulse">
+                        <div className="flex items-center justify-between mb-4">
+                          <div className="flex items-center gap-3">
+                            <div className="w-12 h-12 rounded-full bg-slate-200" />
+                            <div className="space-y-2">
+                              <div className="h-4 w-32 bg-slate-200 rounded" />
+                              <div className="h-3 w-24 bg-slate-100 rounded" />
+                            </div>
+                          </div>
+                          <div className="h-8 w-24 bg-slate-100 rounded-full" />
+                        </div>
+                        <div className="space-y-2">
+                          <div className="h-4 w-full bg-slate-100 rounded" />
+                          <div className="h-4 w-11/12 bg-slate-100 rounded" />
+                          <div className="h-4 w-9/12 bg-slate-100 rounded" />
+                        </div>
+                        <div className="mt-5 pt-4 border-t border-slate-100 flex gap-3">
+                          <div className="h-4 w-12 bg-slate-100 rounded" />
+                          <div className="h-4 w-12 bg-slate-100 rounded" />
+                          <div className="h-4 w-12 bg-slate-100 rounded" />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               )}
 
