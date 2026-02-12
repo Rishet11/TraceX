@@ -2,6 +2,14 @@ import { useState } from 'react';
 import { ExternalLink, Heart, MessageCircle, Repeat, Calendar, Sparkles, AlertCircle } from 'lucide-react';
 import { cn } from '@/lib/utils'; // Assuming cn is available
 
+function isValidAnalysisPayload(payload) {
+  if (!payload || typeof payload !== 'object') return false;
+  if (!Number.isFinite(Number(payload.score))) return false;
+  if (typeof payload.verdict !== 'string' || !payload.verdict.trim()) return false;
+  if (typeof payload.explanation !== 'string' || !payload.explanation.trim()) return false;
+  return true;
+}
+
 export default function ResultCard({ tweet, similarity, badges, originalText }) {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysis, setAnalysis] = useState(null);
@@ -12,9 +20,15 @@ export default function ResultCard({ tweet, similarity, badges, originalText }) 
     'text-gray-600 bg-gray-50 border-gray-200';
 
   const handleAnalyze = async () => {
-    if (!originalText) return;
+    if (!originalText?.trim()) {
+      setError('Original tweet text is missing. Run a search again.');
+      return;
+    }
+
     setIsAnalyzing(true);
+    setAnalysis(null);
     setError(null);
+
     try {
       const res = await fetch('/api/analyze', {
         method: 'POST',
@@ -26,7 +40,10 @@ export default function ResultCard({ tweet, similarity, badges, originalText }) 
       });
       
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Analysis failed');
+      if (!res.ok) throw new Error(data?.error || 'Analysis failed');
+      if (!isValidAnalysisPayload(data)) {
+        throw new Error('AI returned an invalid analysis format. Please retry.');
+      }
       
       setAnalysis(data);
     } catch (err) {

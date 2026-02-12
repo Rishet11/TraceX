@@ -1,25 +1,42 @@
 import { NextResponse } from 'next/server';
-import { analyzeTweetSimilarity } from '@/lib/gemini';
+import { AnalysisError, analyzeTweetSimilarity } from '@/lib/gemini';
 
 export async function POST(request) {
   try {
     const { original, candidate } = await request.json();
 
-    if (!original || !candidate) {
+    const originalText = typeof original === 'string' ? original.trim() : '';
+    const candidateText = typeof candidate === 'string' ? candidate.trim() : '';
+
+    if (!originalText || !candidateText) {
       return NextResponse.json({ error: 'Missing original or candidate text' }, { status: 400 });
     }
 
-    const analysis = await analyzeTweetSimilarity(original, candidate);
-
-    if (!analysis) {
-        return NextResponse.json({ 
-            error: 'Analysis failed. Make sure GEMINI_API_KEY is set.' 
-        }, { status: 500 });
-    }
+    const analysis = await analyzeTweetSimilarity(originalText, candidateText);
 
     return NextResponse.json(analysis);
-
   } catch (error) {
+    if (error instanceof AnalysisError) {
+      if (error.code === 'MISSING_API_KEY') {
+        return NextResponse.json(
+          { error: 'AI analysis is not configured on the server.', code: error.code },
+          { status: 503 }
+        );
+      }
+
+      if (error.code === 'INVALID_MODEL_RESPONSE') {
+        return NextResponse.json(
+          { error: 'AI returned an invalid response. Please retry.', code: error.code },
+          { status: 502 }
+        );
+      }
+
+      return NextResponse.json(
+        { error: 'AI provider request failed. Please retry.', code: error.code },
+        { status: 502 }
+      );
+    }
+
     console.error('Analysis API Error:', error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
