@@ -12,17 +12,21 @@ export default function Home() {
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(false);
   const [searchStatus, setSearchStatus] = useState('idle'); // idle | loading | success | error
+  const [searchMeta, setSearchMeta] = useState(null);
+  const [shareWarning, setShareWarning] = useState('');
   
   // Filter & Sort State
   const [similarityThreshold, setSimilarityThreshold] = useState(80);
   const [hideRetweets, setHideRetweets] = useState(false);
   const [sortBy, setSortBy] = useState('date'); // 'date', 'similarity', 'engagement'
 
-  const handleSearch = async (searchText) => {
+  const handleSearch = async (searchText, options = {}) => {
     setLoading(true);
     setSearchStatus('loading');
     setQuery(searchText);
     setResults([]);
+    setSearchMeta(null);
+    setHideRetweets(options.queryInputType === 'url_text_extracted');
 
     try {
       const response = await fetch('/api/search', {
@@ -30,7 +34,11 @@ export default function Home() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ query: searchText }),
+        body: JSON.stringify({
+          query: searchText,
+          queryInputType: options.queryInputType || 'text',
+          excludeTweetId: options.excludeTweetId || null,
+        }),
       });
 
       const data = await response.json();
@@ -40,53 +48,126 @@ export default function Home() {
       }
 
       // Calculate similarity for all results immediately
-      const resultsWithScores = (data.results || []).map(tweet => ({
-        ...tweet,
-        similarityScore: calculateSimilarity(searchText, tweet.content)
-      }));
+      const resultsWithScores = (data.results || []).map(tweet => {
+        const engagement = (tweet.stats?.likes || 0) + (tweet.stats?.retweets || 0) + (tweet.stats?.replies || 0);
+        const urlMatch = tweet.url?.match(/status\/(\d+)/);
+        const parsedDate = Number.isFinite(Date.parse(tweet.date)) ? Date.parse(tweet.date) : null;
+        return {
+          ...tweet,
+          similarityScore: calculateSimilarity(searchText, tweet.content),
+          engagement,
+          parsedDate,
+          tweetId: urlMatch ? urlMatch[1] : null,
+        };
+      });
 
       setResults(resultsWithScores);
+      setSearchMeta(data.meta || null);
       setSearchStatus('success');
+      setShareWarning('');
     } catch (error) {
       console.error('Search error:', error);
       setResults([]);
+      setSearchMeta(null);
       setSearchStatus('error');
     } finally {
       setLoading(false);
     }
   };
 
-  const processedResults = useMemo(() => {
+  const processedData = useMemo(() => {
     let filtered = results.filter(r => r.similarityScore >= similarityThreshold);
-    
     if (hideRetweets) {
-      // Simplistic check: if content starts with "RT @" or stats.retweets is undefined (unlikely)
-      // Nitter usually handles RTs differently, but for now we rely on content or just ignore if implementation is tricky
-      filtered = filtered.filter(r => !r.content.startsWith('RT @'));
+      filtered = filtered.filter((r) => {
+        const content = String(r.content || '').trim();
+        const isRetweetLike = r.isRetweet === true || content.startsWith('RT @');
+        const hasStatusUrl = /https?:\/\/(x|twitter)\.com\/[^/\s]+\/status\/\d+/i.test(content);
+        const hasQuoteMarker = /\b(QT|QRT|quote tweet|quoted)\b/i.test(content);
+        const isQuoteLike = r.isQuote === true || (hasStatusUrl && hasQuoteMarker);
+        return !isRetweetLike && !isQuoteLike;
+      });
     }
 
-    return filtered.sort((a, b) => {
+    const engagements = filtered.map((r) => r.engagement ?? 0).sort((a, b) => a - b);
+    const mid = Math.floor(engagements.length / 2);
+    const medianEngagement = engagements.length === 0 ? 0 : (engagements.length % 2 === 0 ? (engagements[mid - 1] + engagements[mid]) / 2 : engagements[mid]);
+    const viralThreshold = medianEngagement > 0 ? medianEngagement * 10 : Infinity;
+
+    const sorted = [...filtered].sort((a, b) => {
       if (sortBy === 'similarity') return b.similarityScore - a.similarityScore;
-      if (sortBy === 'engagement') return (b.stats.likes + b.stats.retweets) - (a.stats.likes + a.stats.retweets);
-      // Date sort (default relative logic or parse date)
-      // Simple string comparison for standard ISO-like dates work, but Nitter dates vary.
-      // If native date object available, use it. For now assuming date string sort or stable.
-      return 0; // Keep nitter order (usually chronological)
+      if (sortBy === 'engagement') return (b.engagement || 0) - (a.engagement || 0);
+      if (sortBy === 'oldest') {
+        const aDate = a.parsedDate ?? Infinity;
+        const bDate = b.parsedDate ?? Infinity;
+        return aDate - bDate;
+      }
+      // default date sort (newest first)
+      const aDate = a.parsedDate ?? -Infinity;
+      const bDate = b.parsedDate ?? -Infinity;
+      return bDate - aDate;
     });
+
+    const oldestTweet = sorted.filter(r => r.parsedDate != null).reduce((prev, curr) => {
+      if (!prev) return curr;
+      return (curr.parsedDate ?? Infinity) < (prev.parsedDate ?? Infinity) ? curr : prev;
+    }, null);
+
+    return {
+      sorted,
+      medianEngagement,
+      viralThreshold,
+      oldestTweetId: oldestTweet?.tweetId || null,
+    };
   }, [results, similarityThreshold, hideRetweets, sortBy]);
 
   const generateShareUrl = () => {
     const shareData = {
       q: query,
-      r: processedResults.map(r => ({
-        ...r, // Optimization: pick only needed fields to save length
-        score: r.similarityScore
-      }))
+      r: processedData.sorted.map(r => ({
+        ...r,
+        score: r.similarityScore,
+      })),
     };
     const encoded = encodeShareData(shareData);
+    if (!encoded) return;
     const url = `${window.location.origin}/results?data=${encoded}`;
+    if (url.length > 2000) {
+      setShareWarning('Too many results to share. Try filtering to reduce the payload.');
+      return;
+    }
     navigator.clipboard.writeText(url);
-    alert('Share link copied to clipboard!');
+    setShareWarning('Share link copied to clipboard!');
+  };
+
+  const diagnosticsText = useMemo(() => {
+    if (!searchMeta) return '';
+    const tried = searchMeta?.variantsTried?.length || 0;
+    const nitterAttempts = searchMeta?.sources?.nitter?.attempts || 0;
+    const ddgAttempts = searchMeta?.sources?.duckduckgo?.attempts || 0;
+    if (!tried) return '';
+    return `Tried ${tried} query variant${tried === 1 ? '' : 's'} across ${nitterAttempts} Nitter and ${ddgAttempts} DuckDuckGo attempt${ddgAttempts === 1 ? '' : 's'}.`;
+  }, [searchMeta]);
+
+  const sourceSummary = useMemo(() => {
+    if (!searchMeta?.sources) return '';
+    const available = [];
+    const nitter = searchMeta.sources.nitter;
+    const ddg = searchMeta.sources.duckduckgo;
+    if (nitter?.attempts > nitter?.failures) available.push('Nitter');
+    if (ddg?.attempts > ddg?.failures) available.push('DuckDuckGo');
+    if (available.length === 0) return '';
+    return `Found using ${available.join(' + ')}`;
+  }, [searchMeta]);
+
+  const resetSearch = () => {
+    setQuery('');
+    setResults([]);
+    setSimilarityThreshold(80);
+    setSortBy('date');
+    setHideRetweets(false);
+    setSearchStatus('idle');
+    setSearchMeta(null);
+    setShareWarning('');
   };
 
   return (
@@ -103,7 +184,7 @@ export default function Home() {
            <div className="space-y-6">
               {searchStatus === 'success' && results.length > 0 && (
                 <>
-                  <div className="flex flex-col md:flex-row justify-between items-center bg-white p-4 rounded-xl shadow-sm border border-gray-100 gap-4">
+                    <div className="flex flex-col md:flex-row justify-between items-center bg-white p-4 rounded-xl shadow-sm border border-gray-100 gap-4">
                      <div className="flex flex-col md:flex-row gap-4 w-full md:w-auto items-center">
                         <div className="flex items-center gap-2">
                           <Filter size={18} className="text-gray-500" />
@@ -126,7 +207,7 @@ export default function Home() {
                                 onChange={(e) => setHideRetweets(e.target.checked)}
                                 className="rounded text-blue-600 focus:ring-blue-500"
                               />
-                              Hide Retweets
+                              Hide Retweets & Quotes
                            </label>
                         </div>
 
@@ -138,37 +219,59 @@ export default function Home() {
                              className="text-sm border-gray-300 rounded-md focus:border-blue-500 focus:ring-blue-500 bg-transparent py-1"
                            >
                              <option value="date">Newest First</option>
+                             <option value="oldest">Oldest First</option>
                              <option value="similarity">Highest Match</option>
                              <option value="engagement">Most Viral</option>
                            </select>
                         </div>
                      </div>
 
-                     <div className="flex gap-2">
-                        <button 
-                          onClick={generateShareUrl}
-                          className="flex items-center gap-2 px-4 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors font-medium text-sm"
-                        >
-                          <Share2 size={16} /> Share Results
-                        </button>
-                     </div>
-                  </div>
+                        <div className="flex flex-col md:flex-row gap-2 items-center">
+                           <button 
+                             onClick={generateShareUrl}
+                             className="flex items-center gap-2 px-4 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors font-medium text-sm"
+                           >
+                             <Share2 size={16} /> Share Results
+                           </button>
+                           <button
+                             onClick={resetSearch}
+                             className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors text-sm"
+                           >
+                             Check another tweet
+                           </button>
+                        </div>
+                        {shareWarning && (
+                          <div className="text-xs text-red-600 mt-1 md:mt-0 md:ml-4">
+                            {shareWarning}
+                          </div>
+                        )}
+                      </div>
 
                   <div className="space-y-4">
-                    {processedResults.length === 0 ? (
+                    {sourceSummary && (
+                      <div className="text-xs text-gray-500 px-1">{sourceSummary}</div>
+                    )}
+                    {processedData.sorted.length === 0 ? (
                       <div className="text-center py-10 text-gray-500">
                         No results match your filters.
                       </div>
                     ) : (
-                      processedResults.map((tweet, i) => (
-                        <ResultCard 
-                          key={i} 
-                          tweet={tweet} 
-                          originalText={query}
-                          similarity={tweet.similarityScore}
-                          badges={tweet.similarityScore === 100 ? ['Exact Match'] : []}
-                        />
-                      ))
+                      processedData.sorted.map((tweet, i) => {
+                        const badges = [];
+                        if (tweet.similarityScore === 100) badges.push('💯 EXACT MATCH');
+                        if (processedData.oldestTweetId && tweet.tweetId === processedData.oldestTweetId) badges.push('⭐ OLDEST');
+                        if ((tweet.engagement || 0) >= processedData.viralThreshold) badges.push('🔥 VIRAL');
+
+                        return (
+                          <ResultCard 
+                            key={i} 
+                            tweet={tweet} 
+                            originalText={query}
+                            similarity={tweet.similarityScore}
+                            badges={badges}
+                          />
+                        );
+                      })
                     )}
                   </div>
                 </>
@@ -180,6 +283,19 @@ export default function Home() {
                     <p className="text-gray-600 max-w-md mx-auto">
                         We could not find matching tweets for this query right now.
                     </p>
+                    <div className="pt-2">
+                      <a
+                        href={`https://x.com/search?q=${encodeURIComponent('"' + query + '"')}&f=live`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center px-5 py-2.5 bg-black text-white rounded-lg hover:bg-gray-800 transition-colors font-medium text-sm"
+                      >
+                        Try on X
+                      </a>
+                    </div>
+                    {diagnosticsText && (
+                      <p className="text-xs text-gray-500 pt-1">{diagnosticsText}</p>
+                    )}
                 </div>
               )}
 
