@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Search, Link as LinkIcon, AlertCircle, Loader2 } from 'lucide-react';
+import { Search, AlertCircle, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export default function SearchInput({ onSearch, isLoading }) {
@@ -36,6 +36,10 @@ export default function SearchInput({ onSearch, isLoading }) {
         
         if (!response.ok) {
           throw new Error(data.error || 'Failed to fetch tweet');
+        }
+        if (data?.unavailable || !data?.tweet?.content) {
+          setError(data?.message || 'Could not fetch tweet automatically. Please paste the tweet text directly.');
+          return;
         }
 
         // Call search with fetched content
