@@ -31,6 +31,7 @@ test('returns success with results and excludes source tweet id', async () => {
       searchNitterFn: async () => ({ results: [makeTweet(1), makeTweet(2)], instance: 'nitter.test' }),
       searchDuckDuckGoFn: async () => ({ results: [], instance: 'DuckDuckGo' }),
       searchBingFn: async () => ({ results: [], instance: 'Bing RSS' }),
+      searchJinaFn: async () => ({ results: [], instance: 'Jina Mirror' }),
       enrichTweetMetricsFn: async (results) => results,
     }
   );
@@ -49,6 +50,7 @@ test('returns success empty when sources respond but no results', async () => {
       searchNitterFn: async () => ({ results: [], instance: 'nitter.test' }),
       searchDuckDuckGoFn: async () => ({ results: [], instance: 'DuckDuckGo' }),
       searchBingFn: async () => ({ results: [], instance: 'Bing RSS' }),
+      searchJinaFn: async () => ({ results: [], instance: 'Jina Mirror' }),
       enrichTweetMetricsFn: async (results) => results,
     }
   );
@@ -69,6 +71,7 @@ test('returns 500 when all sources fail', async () => {
       searchNitterFn: fail,
       searchDuckDuckGoFn: fail,
       searchBingFn: fail,
+      searchJinaFn: fail,
       enrichTweetMetricsFn: async (results) => results,
     }
   );
@@ -102,6 +105,7 @@ test('excludes source tweet by username + content fallback when ids are unreliab
       searchNitterFn: async () => ({ results: [sameSourceDifferentId, trueCopy], instance: 'nitter.test' }),
       searchDuckDuckGoFn: async () => ({ results: [], instance: 'DuckDuckGo' }),
       searchBingFn: async () => ({ results: [], instance: 'Bing RSS' }),
+      searchJinaFn: async () => ({ results: [], instance: 'Jina Mirror' }),
       enrichTweetMetricsFn: async (results) => results,
     }
   );
@@ -118,6 +122,7 @@ test('uses Bing fallback when nitter and ddg return no results', async () => {
       searchNitterFn: async () => ({ results: [], instance: 'nitter.test' }),
       searchDuckDuckGoFn: async () => ({ results: [], instance: 'DuckDuckGo' }),
       searchBingFn: async () => ({ results: [makeTweet(3)], instance: 'Bing RSS' }),
+      searchJinaFn: async () => ({ results: [], instance: 'Jina Mirror' }),
       enrichTweetMetricsFn: async (results) => results,
     }
   );
@@ -125,4 +130,21 @@ test('uses Bing fallback when nitter and ddg return no results', async () => {
   assert.equal(response.status, 200);
   assert.equal(response.body.results.length, 1);
   assert.equal(response.body.results[0].source, 'bing');
+});
+
+test('uses Jina fallback when nitter, ddg, and bing return no results', async () => {
+  const response = await runSearchPipeline(
+    { query: 'hello world this is long enough' },
+    {
+      searchNitterFn: async () => ({ results: [], instance: 'nitter.test' }),
+      searchDuckDuckGoFn: async () => ({ results: [], instance: 'DuckDuckGo' }),
+      searchBingFn: async () => ({ results: [], instance: 'Bing RSS' }),
+      searchJinaFn: async () => ({ results: [makeTweet(4)], instance: 'Jina Mirror' }),
+      enrichTweetMetricsFn: async (results) => results,
+    }
+  );
+
+  assert.equal(response.status, 200);
+  assert.equal(response.body.results.length, 1);
+  assert.equal(response.body.results[0].source, 'jina');
 });
