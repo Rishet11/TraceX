@@ -16,6 +16,13 @@ test('extractStatsFromSnippet reads replies/retweets/likes from text', () => {
   assert.equal(stats.replies, 1681);
 });
 
+test('extractStatsFromSnippet treats quote tweets as engagement signal', () => {
+  const stats = extractStatsFromSnippet('... 9 Retweets 1 Quote Tweet 36 Likes ...');
+  assert.equal(stats.retweets, 9);
+  assert.equal(stats.likes, 36);
+  assert.equal(stats.replies, 0);
+});
+
 test('cleanSnippetContent strips reply boilerplate and metadata tails', () => {
   const cleaned = cleanSnippetContent(
     'Merge Machines @mergemachines tweet text here Replying to @user1 and @user2 8:29 AM · Sep 17, 2022 9 Retweets 36 Likes'
