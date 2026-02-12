@@ -25,6 +25,20 @@ export async function POST(request) {
       );
     }
 
+    if (status >= 500 || body?.meta?.reason === 'all_sources_failed') {
+      console.warn(
+        JSON.stringify({
+          event: 'search_alert',
+          severity: 'high',
+          reason: body?.meta?.reason || 'request_failed',
+          queryInputType: body?.meta?.queryInputType || payload?.queryInputType || 'text',
+          queryLength: String(payload?.query || '').length,
+          sources: body?.meta?.sources || null,
+          at: new Date().toISOString(),
+        })
+      );
+    }
+
     return NextResponse.json(body, { status });
   } catch (error) {
     console.error('Search API Error:', error);

@@ -76,6 +76,9 @@ test('fallback source cooldown skips repeatedly failing source on subsequent cal
     retries: 1,
     syndicationFn,
     oembedFn,
+    jinaStatusFn: async () => {
+      throw new Error('should not be called while oembed succeeds');
+    },
   });
   assert.equal(second.source, 'oembed');
   assert.equal(syndicationAttempts, 2);
