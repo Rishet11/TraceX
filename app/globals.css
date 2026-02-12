@@ -1,10 +1,14 @@
 @import "tailwindcss";
 
 :root {
-  --background: #f7f9fc;
+  --background: #f8fafc;
   --foreground: #0f172a;
   --surface: #ffffff;
   --surface-muted: #f8fafc;
+  --text-strong: #111827;
+  --text-body: #374151;
+  --text-muted: #6b7280;
+  --text-light: #9ca3af;
   --neutral-100: #f1f5f9;
   --neutral-200: #e2e8f0;
   --neutral-500: #64748b;
@@ -19,12 +23,12 @@
   --warning-600: #ca8a04;
   --danger-50: #fef2f2;
   --danger-600: #dc2626;
-  --border: #e2e8f0;
-  --shadow-sm: 0 1px 2px 0 rgba(15, 23, 42, 0.04);
-  --shadow-md: 0 10px 24px -16px rgba(15, 23, 42, 0.3);
+  --border: #e5e7eb;
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-md: 0 1px 3px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.06);
   --radius-lg: 0.75rem;
-  --radius-xl: 1rem;
-  --radius-2xl: 1.25rem;
+  --radius-xl: 0.75rem;
+  --radius-2xl: 0.75rem;
   --section-space: 2.25rem;
   --space-2: 0.5rem;
   --space-3: 0.75rem;
@@ -44,9 +48,7 @@
 
 body {
   background-color: var(--background);
-  background-image: 
-    radial-gradient(at 0% 0%, rgba(37, 99, 235, 0.08) 0px, transparent 52%),
-    radial-gradient(at 100% 0%, rgba(14, 165, 233, 0.06) 0px, transparent 48%);
+  background-image: none;
   color: var(--foreground);
   font-family: var(--font-sans-stack);
   -webkit-font-smoothing: antialiased;
@@ -76,7 +78,7 @@ h1, h2, h3 {
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius-2xl);
-  box-shadow: var(--shadow-md);
+  box-shadow: var(--shadow-sm);
 }
 
 .surface-interactive {
@@ -84,13 +86,13 @@ h1, h2, h3 {
 }
 
 .surface-interactive:hover {
-  transform: translateY(-1px);
+  transform: translateY(-2px);
   box-shadow: var(--shadow-md);
 }
 
 .text-hero {
-  font-size: clamp(2rem, 4vw, 3rem);
-  line-height: 1.1;
+  font-size: clamp(2.35rem, 6vw, 4rem);
+  line-height: 1.02;
   font-weight: 800;
 }
 
@@ -122,7 +124,7 @@ button:focus-visible,
 input:focus-visible,
 textarea:focus-visible,
 select:focus-visible {
-  outline: 2px solid var(--brand-500);
+  outline: 3px solid rgba(37, 99, 235, 0.3);
   outline-offset: 2px;
 }
 
