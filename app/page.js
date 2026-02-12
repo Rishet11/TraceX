@@ -38,6 +38,8 @@ export default function Home() {
           query: searchText,
           queryInputType: options.queryInputType || 'text',
           excludeTweetId: options.excludeTweetId || null,
+          excludeUsername: options.excludeUsername || null,
+          excludeContent: options.excludeContent || null,
         }),
       });
 

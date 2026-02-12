@@ -42,7 +42,9 @@ export default function SearchInput({ onSearch, isLoading }) {
         // We might want to pass the original URL too for "Copy Detected" context
         onSearch(data.tweet.content, {
           queryInputType: 'url_text_extracted',
-          excludeTweetId: data.tweetId || null
+          excludeTweetId: data.tweetId || null,
+          excludeUsername: data.tweet?.username || null,
+          excludeContent: data.tweet?.content || null,
         });
       } catch (err) {
         console.error(err);

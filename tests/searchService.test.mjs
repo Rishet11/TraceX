@@ -73,3 +73,36 @@ test('returns 500 when all sources fail', async () => {
   assert.equal(response.status, 500);
   assert.equal(response.body.meta.reason, 'all_sources_failed');
 });
+
+test('excludes source tweet by username + content fallback when ids are unreliable', async () => {
+  const sourceContent = 'Name a career that AI cannot replace.';
+  const sameSourceDifferentId = {
+    ...makeTweet(999, sourceContent),
+    tweetId: '999',
+    author: { fullname: 'Aryan', username: 'justbyte_' },
+  };
+  const trueCopy = {
+    ...makeTweet(555, sourceContent),
+    tweetId: '555',
+    author: { fullname: 'Another', username: 'copycat_user' },
+  };
+
+  const response = await runSearchPipeline(
+    {
+      query: sourceContent,
+      queryInputType: 'url_text_extracted',
+      excludeTweetId: '123',
+      excludeUsername: '@justbyte_',
+      excludeContent: sourceContent,
+    },
+    {
+      searchNitterFn: async () => ({ results: [sameSourceDifferentId, trueCopy], instance: 'nitter.test' }),
+      searchDuckDuckGoFn: async () => ({ results: [], instance: 'DuckDuckGo' }),
+      enrichTweetMetricsFn: async (results) => results,
+    }
+  );
+
+  assert.equal(response.status, 200);
+  assert.equal(response.body.results.length, 1);
+  assert.equal(response.body.results[0].author.username, 'copycat_user');
+});
