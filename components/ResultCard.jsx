@@ -132,8 +132,13 @@ export default function ResultCard({ tweet, similarity, badges, originalText }) 
           </div>
         </div>
 
-        <div className={cn('px-3 py-1.5 rounded-full text-sm font-bold border shadow-sm shrink-0', similarityColor)}>
-          {similarity}% Match
+        <div className="shrink-0 text-right space-y-1">
+          <div className={cn('px-3 py-1.5 rounded-full text-sm font-bold border shadow-sm', similarityColor)}>
+            {similarity}% Match
+          </div>
+          <p className="text-[11px] text-slate-600" title="Based on textual similarity, structure overlap, and ranking quality signals.">
+            Why this match?
+          </p>
         </div>
       </header>
 
@@ -180,13 +185,16 @@ export default function ResultCard({ tweet, similarity, badges, originalText }) 
 
         <div className="flex flex-wrap items-center gap-2 sm:gap-3">
           {!analysis && !isAnalyzing && (
-            <button
-              onClick={handleAnalyze}
-              className="flex items-center gap-1.5 text-violet-700 hover:text-violet-900 hover:bg-violet-50 px-3 py-1.5 rounded-lg font-medium transition-all text-xs border border-transparent hover:border-violet-100"
-              disabled={isAnalyzing}
-            >
-              <Sparkles size={14} /> Analyze with AI
-            </button>
+            <div className="flex flex-col gap-1">
+              <button
+                onClick={handleAnalyze}
+                className="flex items-center gap-1.5 text-violet-700 hover:text-violet-900 hover:bg-violet-50 px-3 py-1.5 rounded-lg font-medium transition-all text-xs border border-transparent hover:border-violet-100 w-fit"
+                disabled={isAnalyzing}
+              >
+                <Sparkles size={14} /> Analyze with AI
+              </button>
+              <p className="text-[11px] text-slate-600">See if this looks like likely idea theft.</p>
+            </div>
           )}
 
           <span className="flex items-center gap-1.5 text-slate-600 text-xs">
