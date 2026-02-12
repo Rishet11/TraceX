@@ -40,7 +40,10 @@ export default function SearchInput({ onSearch, isLoading }) {
 
         // Call search with fetched content
         // We might want to pass the original URL too for "Copy Detected" context
-        onSearch(data.tweet.content);
+        onSearch(data.tweet.content, {
+          queryInputType: 'url_text_extracted',
+          excludeTweetId: data.tweetId || null
+        });
       } catch (err) {
         console.error(err);
         setError('Could not fetch tweet automatically. Please paste the text directly.');
@@ -54,7 +57,7 @@ export default function SearchInput({ onSearch, isLoading }) {
         setError('Please enter at least 10 characters for a meaningful search');
         return;
       }
-      onSearch(input);
+      onSearch(input, { queryInputType: 'text' });
     }
   };
 
