@@ -1,10 +1,11 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { Check } from 'lucide-react';
 import AppHeader from '@/components/AppHeader';
 import AppFooter from '@/components/AppFooter';
+import { trackEvent } from '@/lib/analytics';
 
 export default function PricingPage() {
   const [email, setEmail] = useState('');
@@ -21,10 +22,18 @@ export default function PricingPage() {
     return '';
   }, [email, touched]);
 
+  useEffect(() => {
+    trackEvent('pricing_viewed', { page: 'pricing' });
+  }, []);
+
   const startCheckout = async () => {
     setTouched(true);
     setCheckoutError('');
     if (emailError) return;
+    trackEvent('checkout_started', {
+      plan: 'pro',
+      emailDomain: (email.split('@')[1] || 'unknown').toLowerCase(),
+    });
 
     setLoading(true);
     try {
