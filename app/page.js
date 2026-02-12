@@ -13,6 +13,7 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [searchStatus, setSearchStatus] = useState('idle'); // idle | loading | success | error
   const [searchMeta, setSearchMeta] = useState(null);
+  const [lastSearchOptions, setLastSearchOptions] = useState({ queryInputType: 'text' });
   const [shareWarning, setShareWarning] = useState('');
   
   // Filter & Sort State
@@ -21,12 +22,20 @@ export default function Home() {
   const [sortBy, setSortBy] = useState('date'); // 'date', 'similarity', 'engagement'
 
   const handleSearch = async (searchText, options = {}) => {
+    const normalizedOptions = {
+      queryInputType: options.queryInputType || 'text',
+      excludeTweetId: options.excludeTweetId || null,
+      excludeUsername: options.excludeUsername || null,
+      excludeContent: options.excludeContent || null,
+    };
+
     setLoading(true);
     setSearchStatus('loading');
     setQuery(searchText);
+    setLastSearchOptions(normalizedOptions);
     setResults([]);
     setSearchMeta(null);
-    setHideRetweets(options.queryInputType === 'url_text_extracted');
+    setHideRetweets(normalizedOptions.queryInputType === 'url_text_extracted');
 
     try {
       const response = await fetch('/api/search', {
@@ -34,18 +43,13 @@ export default function Home() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          query: searchText,
-          queryInputType: options.queryInputType || 'text',
-          excludeTweetId: options.excludeTweetId || null,
-          excludeUsername: options.excludeUsername || null,
-          excludeContent: options.excludeContent || null,
-        }),
+        body: JSON.stringify({ query: searchText, ...normalizedOptions }),
       });
 
       const data = await response.json();
       
       if (!response.ok) {
+        setSearchMeta(data.meta || null);
         throw new Error(data.error || 'Search failed');
       }
 
@@ -70,7 +74,6 @@ export default function Home() {
     } catch (error) {
       console.error('Search error:', error);
       setResults([]);
-      setSearchMeta(null);
       setSearchStatus('error');
     } finally {
       setLoading(false);
@@ -165,6 +168,7 @@ export default function Home() {
   }, [searchMeta]);
 
   const showDebugPanel = process.env.NODE_ENV !== 'production' && searchMeta;
+  const isDegradedSources = searchStatus === 'error' && searchMeta?.reason === 'all_sources_failed';
 
   const resetSearch = () => {
     setQuery('');
@@ -333,9 +337,18 @@ export default function Home() {
                     <div className="text-yellow-500 mx-auto w-12 h-12 flex items-center justify-center bg-yellow-50 rounded-full text-2xl">⚠️</div>
                     <h3 className="text-lg font-semibold text-gray-900">Automated Search Failed</h3>
                     <p className="text-gray-600 max-w-md mx-auto">
-                        Nitter instances are currently unavailable or blocking requests. 
-                        Please try manually searching on X.
+                        {isDegradedSources
+                          ? 'Search sources are temporarily degraded or rate-limited. Retry in a few seconds, or use manual X search.'
+                          : 'Nitter instances are currently unavailable or blocking requests. Please try manually searching on X.'}
                     </p>
+                    {isDegradedSources && (
+                      <button
+                        onClick={() => handleSearch(query, lastSearchOptions)}
+                        className="inline-flex items-center px-5 py-2.5 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors font-medium text-sm"
+                      >
+                        Retry Search
+                      </button>
+                    )}
                     <a 
                         href={`https://x.com/search?q=${encodeURIComponent('"' + query + '"')}&f=live`} 
                         target="_blank" 
