@@ -164,6 +164,7 @@ export default function Home() {
                         <ResultCard 
                           key={i} 
                           tweet={tweet} 
+                          originalText={query}
                           similarity={tweet.similarityScore}
                           badges={tweet.similarityScore === 100 ? ['Exact Match'] : []}
                         />

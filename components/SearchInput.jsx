@@ -60,53 +60,52 @@ export default function SearchInput({ onSearch, isLoading }) {
 
   return (
     <div className="w-full max-w-2xl mx-auto p-4">
-      <form onSubmit={handleSubmit} className="relative">
-        <div className="relative">
+      <form onSubmit={handleSubmit} className="relative group">
+        <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-500 to-violet-600 rounded-2xl opacity-20 group-hover:opacity-40 transition duration-500 blur-lg"></div>
+        <div className="relative bg-white rounded-2xl shadow-xl flex flex-col p-2 border border-gray-100 transition-all duration-300">
           <textarea
-            className={cn(
-              "w-full p-4 pr-12 text-lg border-2 rounded-xl outline-none transition-all resize-none min-h-[120px]",
-              error ? "border-red-500 focus:border-red-500" : "border-gray-200 focus:border-blue-500 shadow-sm focus:shadow-md"
-            )}
-            placeholder="Paste tweet text or URL here..."
+            className="w-full p-5 bg-transparent outline-none text-gray-800 placeholder-gray-400 font-medium text-lg resize-none min-h-[140px]"
+            placeholder="Paste tweet text or URL here to find copies..."
             value={input}
             onChange={(e) => setInput(e.target.value)}
             disabled={isLoading || isFetchingUrl}
           />
-          <div className="absolute bottom-4 right-4 text-gray-400">
-             {/* Character count or icon can go here */}
+          <div className="flex justify-between items-center px-4 pb-2">
+             <div className="text-xs text-gray-400 font-medium">
+                {input.length > 0 && `${input.length} characters`}
+             </div>
+             <button
+                type="submit"
+                disabled={isLoading || isFetchingUrl || !input.trim()}
+                className={cn(
+                    "px-6 py-2.5 rounded-xl font-semibold text-white transition-all duration-200 flex items-center gap-2 shadow-md hover:shadow-lg active:scale-95",
+                    isLoading || isFetchingUrl 
+                        ? "bg-gray-400 cursor-not-allowed" 
+                        : "bg-gray-900 hover:bg-black"
+                )}
+             >
+                {isLoading || isFetchingUrl ? (
+                <>
+                    <Loader2 className="animate-spin w-4 h-4" />
+                    <span>{isFetchingUrl ? 'Fetching...' : 'Searching...'}</span>
+                </>
+                ) : (
+                    <>
+                        <span>Check for Copies</span>
+                        <Search size={18} />
+                    </>
+                )}
+             </button>
           </div>
         </div>
-
-        {error && (
-          <div className="mt-2 flex items-center text-red-500 text-sm animate-in fade-in slide-in-from-top-1">
-            <AlertCircle size={16} className="mr-1" />
-            {error}
-          </div>
-        )}
-
-        <button
-          type="submit"
-          className={cn(
-            "mt-4 w-full py-3 px-6 rounded-lg text-white font-semibold text-lg flex items-center justify-center transition-all",
-            isLoading || isFetchingUrl
-              ? "bg-gray-400 cursor-not-allowed"
-              : "bg-blue-500 hover:bg-blue-600 active:scale-[0.98] shadow-md hover:shadow-lg"
-          )}
-          disabled={isLoading || isFetchingUrl}
-        >
-          {isLoading || isFetchingUrl ? (
-            <>
-              <Loader2 className="animate-spin mr-2" />
-              {isFetchingUrl ? 'Fetching Tweet...' : 'Searching Copies...'}
-            </>
-          ) : (
-            <>
-              <Search className="mr-2" size={20} />
-              Check for Copies
-            </>
-          )}
-        </button>
       </form>
+
+      {error && (
+        <div className="mt-4 p-4 bg-red-50 text-red-600 rounded-xl border border-red-100 flex items-start gap-3 animate-in fade-in slide-in-from-top-2">
+            <AlertCircle size={20} className="mt-0.5 shrink-0" />
+            <p className="font-medium">{error}</p>
+        </div>
+      )}
     </div>
   );
 }

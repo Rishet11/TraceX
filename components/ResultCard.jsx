@@ -1,69 +1,157 @@
-import { ExternalLink, Heart, MessageCircle, Repeat, Calendar } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { useState } from 'react';
+import { ExternalLink, Heart, MessageCircle, Repeat, Calendar, Sparkles, AlertCircle } from 'lucide-react';
+import { cn } from '@/lib/utils'; // Assuming cn is available
 
-export default function ResultCard({ tweet, similarity, badges }) {
+export default function ResultCard({ tweet, similarity, badges, originalText }) {
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [analysis, setAnalysis] = useState(null);
+  const [error, setError] = useState(null);
+
   const similarityColor = similarity >= 90 ? 'text-green-600 bg-green-50 border-green-200' :
     similarity >= 70 ? 'text-yellow-600 bg-yellow-50 border-yellow-200' :
     'text-gray-600 bg-gray-50 border-gray-200';
 
+  const handleAnalyze = async () => {
+    if (!originalText) return;
+    setIsAnalyzing(true);
+    setError(null);
+    try {
+      const res = await fetch('/api/analyze', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          original: originalText,
+          candidate: tweet.content
+        })
+      });
+      
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Analysis failed');
+      
+      setAnalysis(data);
+    } catch (err) {
+      console.error(err);
+      setError(err.message || 'Failed to analyze');
+    } finally {
+      setIsAnalyzing(false);
+    }
+  };
+
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5 hover:shadow-md transition-shadow">
-      <div className="flex justify-between items-start mb-3">
+    <div className="group bg-white rounded-2xl shadow-sm border border-gray-100 p-6 hover:shadow-xl hover:border-gray-200 transition-all duration-300">
+      <div className="flex justify-between items-start mb-4">
+        {/* Author Info */}
         <div className="flex items-center gap-3">
-          <img 
-            src={tweet.author.avatar || '/placeholder-avatar.png'} 
-            alt={tweet.author.username}
-            className="w-10 h-10 rounded-full bg-gray-200 object-cover"
-            onError={(e) => { e.target.src = 'https://abs.twimg.com/sticky/default_profile_images/default_profile_normal.png' }} 
-          />
+          <div className="relative">
+            <img 
+                src={tweet.author.avatar || 'https://abs.twimg.com/sticky/default_profile_images/default_profile_normal.png'} 
+                alt={tweet.author.username}
+                className="w-12 h-12 rounded-full bg-gray-50 object-cover border-2 border-white shadow-sm"
+                onError={(e) => { e.target.src = 'https://abs.twimg.com/sticky/default_profile_images/default_profile_normal.png' }} 
+            />
+            {tweet.source === 'duckduckgo' && (
+                <div className="absolute -bottom-1 -right-1 bg-white rounded-full p-0.5 shadow-sm" title="Found via DuckDuckGo">
+                    <div className="w-4 h-4 rounded-full bg-orange-400" /> 
+                </div>
+            )}
+          </div>
           <div>
-            <div className="font-bold text-gray-900">{tweet.author.fullname}</div>
+            <div className="font-bold text-gray-900 leading-tight text-lg">{tweet.author.fullname}</div>
             <div className="text-gray-500 text-sm">@{tweet.author.username}</div>
           </div>
         </div>
-        <div className={cn("px-2 py-1 rounded-full text-xs font-bold border", similarityColor)}>
+        
+        {/* Similarity Badge */}
+        <div className={cn("px-3 py-1.5 rounded-full text-sm font-bold border shadow-sm", similarityColor)}>
           {similarity}% Match
         </div>
       </div>
 
-      <p className="text-gray-800 text-lg mb-4 whitespace-pre-wrap leading-relaxed">
+      <p className="text-gray-800 text-lg mb-5 whitespace-pre-wrap leading-relaxed font-normal">
         {tweet.content}
       </p>
 
-      <div className="flex flex-wrap gap-2 mb-4">
-        {badges && badges.map((badge, index) => (
-          <span key={index} className="px-2 py-1 bg-blue-50 text-blue-700 text-xs rounded-md font-medium border border-blue-100">
-            {badge}
-          </span>
-        ))}
-      </div>
+      {/* Badges */}
+      {badges && badges.length > 0 && (
+         <div className="flex flex-wrap gap-2 mb-5">
+            {badges.map((badge, index) => (
+            <span key={index} className="px-2.5 py-1 bg-blue-50 text-blue-700 text-xs rounded-lg font-semibold border border-blue-100 tracking-wide uppercase">
+                {badge}
+            </span>
+            ))}
+         </div>
+      )}
 
-      <div className="flex items-center justify-between pt-4 border-t border-gray-50 text-gray-500 text-sm">
-        <div className="flex gap-4">
-          <span className="flex items-center gap-1" title="Replies">
-            <MessageCircle size={16} /> {tweet.stats.replies}
+      {/* Stats & Actions */}
+      <div className="flex items-center justify-between pt-5 border-t border-gray-100 text-gray-500 text-sm">
+        <div className="flex gap-6">
+          <span className="flex items-center gap-1.5 hover:text-blue-500 transition-colors" title="Replies">
+            <MessageCircle size={18} /> <span className="font-medium">{tweet.stats.replies}</span>
           </span>
-          <span className="flex items-center gap-1" title="Retweets">
-            <Repeat size={16} /> {tweet.stats.retweets}
+          <span className="flex items-center gap-1.5 hover:text-green-500 transition-colors" title="Retweets">
+            <Repeat size={18} /> <span className="font-medium">{tweet.stats.retweets}</span>
           </span>
-          <span className="flex items-center gap-1" title="Likes">
-            <Heart size={16} /> {tweet.stats.likes}
+          <span className="flex items-center gap-1.5 hover:text-pink-500 transition-colors" title="Likes">
+            <Heart size={18} /> <span className="font-medium">{tweet.stats.likes}</span>
           </span>
         </div>
+        
         <div className="flex items-center gap-3">
-           <span className="flex items-center gap-1">
-             <Calendar size={14} /> {tweet.relativeDate}
+           {/* AI Analysis Button */}
+           {!analysis && !isAnalyzing && (
+             <button
+               onClick={handleAnalyze}
+               className="flex items-center gap-1.5 text-violet-600 hover:text-violet-800 hover:bg-violet-50 px-3 py-1.5 rounded-lg font-medium transition-all text-xs border border-transparent hover:border-violet-100"
+               disabled={isAnalyzing}
+             >
+                <Sparkles size={14} /> Analyze with AI
+             </button>
+           )}
+           
+           <span className="flex items-center gap-1.5 text-gray-400">
+             <Calendar size={16} /> {tweet.relativeDate}
            </span>
            <a 
              href={tweet.url} 
              target="_blank" 
              rel="noopener noreferrer"
-             className="flex items-center gap-1 text-blue-500 hover:text-blue-700 font-medium transition-colors"
+             className="flex items-center gap-1.5 text-gray-900 bg-gray-100 hover:bg-gray-200 px-3 py-1.5 rounded-lg font-medium transition-all text-xs"
            >
-             View <ExternalLink size={14} />
+             View Tweet <ExternalLink size={14} />
            </a>
         </div>
       </div>
+      
+      {/* Analysis Result */}
+      {isAnalyzing && (
+        <div className="mt-4 p-4 bg-violet-50 rounded-xl border border-violet-100 animate-pulse flex items-center gap-3">
+            <Sparkles className="text-violet-500 animate-spin-slow" size={20} />
+            <span className="text-violet-700 font-medium">Gemini AI is analyzing similarity...</span>
+        </div>
+      )}
+
+      {error && (
+        <div className="mt-4 p-3 bg-red-50 text-red-600 rounded-lg text-sm border border-red-100 flex items-center gap-2">
+           <AlertCircle size={16} /> {error}
+        </div>
+      )}
+
+      {analysis && (
+        <div className="mt-4 bg-gradient-to-br from-violet-50 to-indigo-50 rounded-xl border border-violet-100 p-5 animate-in fade-in slide-in-from-top-2">
+            <div className="flex items-center justify-between mb-2">
+                <h4 className="font-bold text-violet-900 flex items-center gap-2">
+                    <Sparkles size={18} className="text-violet-600" />
+                    AI Verdict: {analysis.verdict}
+                </h4>
+                <span className="bg-white text-violet-700 px-2 py-1 rounded-md text-xs font-bold border border-violet-100 shadow-sm">
+                    {analysis.score}/100 Confidence
+                </span>
+            </div>
+            <p className="text-violet-800 text-sm leading-relaxed">
+                {analysis.explanation}
+            </p>
+        </div>
+      )}
     </div>
   );
 }
