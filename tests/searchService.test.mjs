@@ -148,3 +148,49 @@ test('uses Jina fallback when nitter, ddg, and bing return no results', async ()
   assert.equal(response.body.results.length, 1);
   assert.equal(response.body.results[0].source, 'jina');
 });
+
+test('short query still runs via adaptive variants and exposes query profile', async () => {
+  const response = await runSearchPipeline(
+    { query: 'gm', queryInputType: 'text' },
+    {
+      searchNitterFn: async () => ({ results: [], instance: 'nitter.test' }),
+      searchDuckDuckGoFn: async () => ({ results: [], instance: 'DuckDuckGo' }),
+      searchBingFn: async () => ({ results: [makeTweet(7, 'gm everyone')], instance: 'Bing RSS' }),
+      searchJinaFn: async () => ({ results: [], instance: 'Jina Mirror' }),
+      enrichTweetMetricsFn: async (results) => results,
+    }
+  );
+
+  assert.equal(response.status, 200);
+  assert.equal(response.body.results.length, 1);
+  assert.equal(response.body.meta.queryProfile.shortQuery, true);
+  assert.ok(response.body.meta.queryProfile.variantCount >= 1);
+});
+
+test('generic query routes fallback priority to bing/jina before duckduckgo', async () => {
+  const callOrder = [];
+
+  const response = await runSearchPipeline(
+    { query: 'good morning', queryInputType: 'text' },
+    {
+      searchNitterFn: async () => ({ results: [], instance: 'nitter.test' }),
+      searchDuckDuckGoFn: async () => {
+        callOrder.push('duckduckgo');
+        return { results: [], instance: 'DuckDuckGo' };
+      },
+      searchBingFn: async () => {
+        callOrder.push('bing');
+        return { results: [makeTweet(8, 'good morning folks')], instance: 'Bing RSS' };
+      },
+      searchJinaFn: async () => {
+        callOrder.push('jina');
+        return { results: [], instance: 'Jina Mirror' };
+      },
+      enrichTweetMetricsFn: async (results) => results,
+    }
+  );
+
+  assert.equal(response.status, 200);
+  assert.equal(response.body.results[0].source, 'bing');
+  assert.equal(callOrder[0], 'bing');
+});
