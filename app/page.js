@@ -4,6 +4,7 @@ import { useState, useMemo } from 'react';
 import SearchInput from '@/components/SearchInput';
 import ResultCard from '@/components/ResultCard'; // I'll use list directly or map here
 import { calculateSimilarity } from '@/lib/similarity';
+import { withQualityScores } from '@/lib/ranking';
 import { encodeShareData } from '@/lib/urlEncoder';
 import { Share2, ArrowDownUp, Filter } from 'lucide-react';
 
@@ -98,18 +99,33 @@ export default function Home() {
     const medianEngagement = engagements.length === 0 ? 0 : (engagements.length % 2 === 0 ? (engagements[mid - 1] + engagements[mid]) / 2 : engagements[mid]);
     const viralThreshold = medianEngagement > 0 ? medianEngagement * 10 : Infinity;
 
-    const sorted = [...filtered].sort((a, b) => {
-      if (sortBy === 'similarity') return b.similarityScore - a.similarityScore;
-      if (sortBy === 'engagement') return (b.engagement || 0) - (a.engagement || 0);
+    const scored = withQualityScores(filtered);
+
+    const sorted = [...scored].sort((a, b) => {
+      if (sortBy === 'similarity') {
+        if (b.similarityScore !== a.similarityScore) return b.similarityScore - a.similarityScore;
+        if ((b.qualityScore || 0) !== (a.qualityScore || 0)) return (b.qualityScore || 0) - (a.qualityScore || 0);
+        const aDate = a.parsedDate ?? -Infinity;
+        const bDate = b.parsedDate ?? -Infinity;
+        return bDate - aDate;
+      }
+      if (sortBy === 'engagement') {
+        const diff = (b.engagement || 0) - (a.engagement || 0);
+        if (diff !== 0) return diff;
+        if ((b.qualityScore || 0) !== (a.qualityScore || 0)) return (b.qualityScore || 0) - (a.qualityScore || 0);
+        return b.similarityScore - a.similarityScore;
+      }
       if (sortBy === 'oldest') {
         const aDate = a.parsedDate ?? Infinity;
         const bDate = b.parsedDate ?? Infinity;
-        return aDate - bDate;
+        if (aDate !== bDate) return aDate - bDate;
+        return (b.qualityScore || 0) - (a.qualityScore || 0);
       }
       // default date sort (newest first)
       const aDate = a.parsedDate ?? -Infinity;
       const bDate = b.parsedDate ?? -Infinity;
-      return bDate - aDate;
+      if (bDate !== aDate) return bDate - aDate;
+      return (b.qualityScore || 0) - (a.qualityScore || 0);
     });
 
     const oldestTweet = sorted.filter(r => r.parsedDate != null).reduce((prev, curr) => {
