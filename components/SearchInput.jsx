@@ -95,9 +95,6 @@ export default function SearchInput({ onSearch, isLoading, prefillText = '' }) {
           <label htmlFor="tweet-query" className="block text-sm font-semibold text-[var(--text-title)] mb-2">
             Tweet text or URL
           </label>
-          <p className="text-helper">
-            Paste a tweet URL or plain text to detect likely copy matches.
-          </p>
           <div className="mt-3">
             <p className="text-[11px] text-[var(--text-muted)] mb-1.5">Try a sample:</p>
             <div className="flex flex-wrap gap-1.5">

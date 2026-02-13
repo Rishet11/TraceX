@@ -256,22 +256,6 @@ export default function Home() {
     setShareWarning('Share link copied to clipboard!');
   };
 
-  const diagnosticsText = useMemo(() => {
-    if (!searchMeta) return '';
-    const tried = searchMeta?.variantsTried?.length || 0;
-    if (!tried) return '';
-    const sources = searchMeta?.sources || {};
-    const activeSourceCount = ['nitter', 'duckduckgo', 'bing', 'jina'].reduce((count, key) => {
-      const entry = sources[key];
-      if (!entry) return count;
-      return entry.attempts > entry.failures ? count + 1 : count;
-    }, 0);
-    if (activeSourceCount > 0) {
-      return `Scan confidence: checked ${tried} query variations across ${activeSourceCount} live sources.`;
-    }
-    return `Scan confidence: checked ${tried} query variations across live sources.`;
-  }, [searchMeta]);
-
   const sourceSummary = useMemo(() => {
     if (!searchMeta?.sources) return '';
     const available = [];
@@ -407,15 +391,6 @@ export default function Home() {
 
           {searchStatus !== 'idle' && (
             <section className="space-y-4 mt-7">
-              {(searchStatus === 'success' || searchStatus === 'error') && query && !isUrlModeSearch && (
-                <div className="surface-soft px-4 py-3 flex flex-col md:flex-row md:items-center md:justify-between gap-2">
-                  <div className="text-sm text-[var(--text-body)]">
-                    <span className="font-semibold">Search:</span> “{query.slice(0, 120)}
-                    {query.length > 120 ? '...' : ''}”
-                  </div>
-                </div>
-              )}
-
               {searchStatus === 'loading' && (
                 <div className="space-y-4">
                   <div className="surface p-5 md:p-6 space-y-3.5">
@@ -751,11 +726,6 @@ export default function Home() {
                     </a>
                   </div>
 
-                  {diagnosticsText && (
-                    <div className="inline-flex max-w-xl text-caption px-3 py-2 rounded-[var(--radius-sm)] border border-green-200 bg-green-50 text-green-700">
-                      {diagnosticsText}
-                    </div>
-                  )}
                 </div>
               )}
 
