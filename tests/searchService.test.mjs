@@ -278,3 +278,27 @@ test('generic query routes fallback priority to bing/jina before duckduckgo', as
   assert.equal(response.body.results[0].source, 'bing');
   assert.equal(callOrder[0], 'bing');
 });
+
+test('returns cached results for repeated identical query in fast mode', async () => {
+  let nitterCalls = 0;
+  const query = 'cache me please unique tracex query';
+  const deps = {
+    enableCache: true,
+    searchNitterFn: async () => {
+      nitterCalls += 1;
+      return { results: [makeTweet(901, query)], instance: 'nitter.test' };
+    },
+    searchDuckDuckGoFn: async () => ({ results: [] }),
+    searchBingFn: async () => ({ results: [] }),
+    searchJinaFn: async () => ({ results: [] }),
+    enrichTweetMetricsFn: async (results) => results,
+  };
+
+  const first = await runSearchPipeline({ query, queryInputType: 'text' }, deps);
+  const second = await runSearchPipeline({ query, queryInputType: 'text' }, deps);
+
+  assert.equal(first.status, 200);
+  assert.equal(second.status, 200);
+  assert.equal(nitterCalls, 1);
+  assert.equal(second.body.meta.cacheHit, true);
+});
