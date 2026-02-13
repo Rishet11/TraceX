@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useMemo, useEffect, useRef } from 'react';
-import { ArrowDownUp, Filter, Share2 } from 'lucide-react';
+import { ArrowDownUp, Filter, Share2, ShieldCheck } from 'lucide-react';
 import SearchInput from '@/components/SearchInput';
 import ResultCard from '@/components/ResultCard';
 import AppHeader from '@/components/AppHeader';
@@ -260,7 +260,16 @@ export default function Home() {
     if (!searchMeta) return '';
     const tried = searchMeta?.variantsTried?.length || 0;
     if (!tried) return '';
-    return `Confidence check: scanned ${tried} query variations across live sources.`;
+    const sources = searchMeta?.sources || {};
+    const activeSourceCount = ['nitter', 'duckduckgo', 'bing', 'jina'].reduce((count, key) => {
+      const entry = sources[key];
+      if (!entry) return count;
+      return entry.attempts > entry.failures ? count + 1 : count;
+    }, 0);
+    if (activeSourceCount > 0) {
+      return `Scan confidence: checked ${tried} query variations across ${activeSourceCount} live sources.`;
+    }
+    return `Scan confidence: checked ${tried} query variations across live sources.`;
   }, [searchMeta]);
 
   const sourceSummary = useMemo(() => {
@@ -306,13 +315,6 @@ export default function Home() {
       input.scrollIntoView({ behavior: 'smooth', block: 'center' });
       input.focus();
     }
-  };
-
-  const broadenQueryText = (value) => {
-    const cleaned = String(value || '').replace(/[^\w\s#@]/g, ' ').replace(/\s+/g, ' ').trim();
-    if (!cleaned) return value;
-    const words = cleaned.split(' ').filter(Boolean);
-    return words.slice(0, Math.min(10, words.length)).join(' ');
   };
 
   useEffect(() => {
@@ -390,31 +392,12 @@ export default function Home() {
 
           {searchStatus !== 'idle' && (
             <section className="space-y-4 mt-7">
-              {(searchStatus === 'success' || searchStatus === 'error') && query && (
+              {(searchStatus === 'success' || searchStatus === 'error') && query && !isUrlModeSearch && (
                 <div className="surface-soft px-4 py-3 flex flex-col md:flex-row md:items-center md:justify-between gap-2">
-                  {isUrlModeSearch && lastSearchOptions?.sourceUrl ? (
-                    <div className="text-sm text-[var(--text-body)] min-w-0">
-                      <div className="min-w-0">
-                        <span className="font-semibold">Source URL:</span>{' '}
-                        <a
-                          href={lastSearchOptions.sourceUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-[var(--brand-700)] hover:underline break-all"
-                        >
-                          {lastSearchOptions.sourceUrl}
-                        </a>
-                      </div>
-                      <p className="text-[11px] text-[var(--text-muted)] mt-0.5">
-                        Searching with text extracted from this tweet.
-                      </p>
-                    </div>
-                  ) : (
-                    <div className="text-sm text-[var(--text-body)]">
-                      <span className="font-semibold">Search:</span> “{query.slice(0, 120)}
-                      {query.length > 120 ? '...' : ''}”
-                    </div>
-                  )}
+                  <div className="text-sm text-[var(--text-body)]">
+                    <span className="font-semibold">Search:</span> “{query.slice(0, 120)}
+                    {query.length > 120 ? '...' : ''}”
+                  </div>
                 </div>
               )}
 
@@ -669,22 +652,33 @@ export default function Home() {
               )}
 
               {searchStatus === 'success' && results.length === 0 && (
-                <div className="surface p-5 md:p-6 text-center space-y-3">
-                  <h3 className="text-xl font-semibold text-[var(--text-title)]">
-                    {selfDuplicates.length > 0
-                      ? 'Good news - no external copies detected'
-                      : 'Good news - no copies detected'}
-                  </h3>
-                  <p className="text-ui max-w-md mx-auto">
-                    {selfDuplicates.length > 0
-                      ? 'We found similar posts from the same author, and no copied tweets from other accounts.'
-                      : 'Your search came back clean for this query right now.'}
-                  </p>
+                <div className="surface p-5 md:p-7 text-center space-y-4">
+                  <div className="mx-auto w-12 h-12 flex items-center justify-center rounded-full bg-green-50 text-green-600 border border-green-100">
+                    <ShieldCheck size={22} />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <h3 className="text-xl md:text-2xl font-semibold text-[var(--text-title)]">
+                      Scan complete - no external copies found
+                    </h3>
+                    <p className="text-ui max-w-2xl mx-auto">
+                      {selfDuplicates.length > 0
+                        ? 'TraceX found only same-author repeats for this query, with no copied tweets from other accounts.'
+                        : 'TraceX checked multiple query variations across live sources and found zero external copy matches.'}
+                    </p>
+                  </div>
+
+                  <div className="flex flex-wrap items-center justify-center gap-2 text-xs">
+                    <span className="chip !bg-green-50 !text-green-700 !border-green-200">0 external copies</span>
+                    {selfDuplicates.length > 0 && (
+                      <span className="chip">{selfDuplicates.length} same-author repeats</span>
+                    )}
+                  </div>
 
                   {selfDuplicates.length > 0 && (
-                    <div className="text-left max-w-lg mx-auto surface-soft p-3">
-                      <p className="text-xs font-semibold text-[var(--text-title)] mb-1.5">
-                        Repeated by original author ({selfDuplicates.length})
+                    <div className="text-left max-w-lg mx-auto surface-soft p-4">
+                      <p className="text-xs font-semibold text-[var(--text-title)] mb-2">
+                        Same-author repeated posts ({selfDuplicates.length})
                       </p>
                       <div className="space-y-2">
                         {selfDuplicates.slice(0, 4).map((tweet, idx) => (
@@ -714,57 +708,39 @@ export default function Home() {
                     </div>
                   )}
 
-                  <div className="text-left max-w-md mx-auto surface-soft p-3">
-                    <p className="text-xs font-semibold text-[var(--text-title)] mb-1">
-                      Want to double-check?
+                  <div className="text-left max-w-lg mx-auto surface-soft p-4">
+                    <p className="text-sm font-semibold text-[var(--text-title)] mb-1.5">
+                      Optional verification
                     </p>
-                    <ul className="text-xs text-[var(--text-muted)] list-disc pl-4 space-y-1">
+                    <ul className="text-sm text-[var(--text-muted)] list-disc pl-4 space-y-1">
                       <li>
                         {isUrlModeSearch
-                          ? 'Try opening the source tweet on X and check live results.'
-                          : 'Use broader wording instead of exact phrasing.'}
+                          ? 'Open this tweet on X to cross-check live results.'
+                          : 'Open this query on X to cross-check live results.'}
                       </li>
-                      {!isUrlModeSearch && <li>Try with the original tweet URL.</li>}
                       <li>Retry after a few minutes for fresher indexing.</li>
                     </ul>
                   </div>
 
-                  <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-2">
+                  <div className="pt-1 flex flex-col sm:flex-row items-center justify-center gap-2">
+                    <button onClick={resetSearch} className="btn btn-primary px-5 py-2.5">
+                      Check another tweet
+                    </button>
                     <a
                       href={`https://x.com/search?q=${encodeURIComponent(`"${query}"`)}&f=live`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="btn btn-primary px-5 py-2.5"
+                      className="btn btn-secondary px-5 py-2.5"
                     >
-                      Try on X
+                      Verify on X
                     </a>
-                    {!isUrlModeSearch && (
-                      <button
-                        type="button"
-                        onClick={() => handleSearch(broadenQueryText(query), { queryInputType: 'text' })}
-                        className="btn btn-secondary px-5 py-2.5"
-                      >
-                        Try broader wording
-                      </button>
-                    )}
-                    {!isUrlModeSearch && (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          resetSearch();
-                          setTimeout(() => focusSearchInput(), 0);
-                        }}
-                        className="btn btn-secondary px-5 py-2.5"
-                      >
-                        Try with tweet URL
-                      </button>
-                    )}
-                    <button onClick={resetSearch} className="btn btn-ghost px-5 py-2.5">
-                      Check another tweet
-                    </button>
                   </div>
 
-                  {diagnosticsText && <p className="text-caption pt-1">{diagnosticsText}</p>}
+                  {diagnosticsText && (
+                    <div className="inline-flex max-w-xl text-caption px-3 py-2 rounded-[var(--radius-sm)] border border-green-200 bg-green-50 text-green-700">
+                      {diagnosticsText}
+                    </div>
+                  )}
                 </div>
               )}
 
