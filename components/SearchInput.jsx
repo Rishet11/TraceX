@@ -53,6 +53,7 @@ export default function SearchInput({ onSearch, isLoading, prefillText = '' }) {
 
         onSearch(data.tweet.content, {
           queryInputType: 'url_text_extracted',
+          sourceUrl: match[0],
           excludeTweetId: data.tweetId || null,
           excludeUsername: data.tweet?.username || null,
           excludeContent: data.tweet?.content || null,
@@ -75,42 +76,40 @@ export default function SearchInput({ onSearch, isLoading, prefillText = '' }) {
   };
 
   return (
-    <section className="surface-elevated p-4 md:p-6 border border-[var(--border)] shadow-[0_1px_3px_rgba(0,0,0,0.06),0_1px_2px_rgba(0,0,0,0.04)]">
+    <section className="surface p-4 md:p-5">
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label htmlFor="tweet-query" className="block text-lg font-semibold text-[#111827] mb-2">
+          <label htmlFor="tweet-query" className="block text-sm font-semibold text-[var(--text-title)] mb-2">
             Tweet text or URL
           </label>
-          <p className="text-sm text-[#6B7280]">
-            Paste a tweet URL or plain text to check for likely copies.
+          <p className="text-helper">
+            Paste a tweet URL or plain text to detect likely copy matches.
           </p>
         </div>
-        <textarea
-          id="tweet-query"
-          className={cn(
-            'w-full p-4 bg-white outline-none text-[#374151] placeholder:text-[#9CA3AF] font-medium text-base resize-none min-h-[170px] rounded-lg border-2 border-[#3B82F6] transition-all duration-150 ease-in',
-            'focus:border-[#2563EB] focus:ring-0 focus:shadow-[0_0_0_3px_rgba(37,99,235,0.1)]',
-            flashInput && 'shadow-[0_0_0_3px_rgba(37,99,235,0.18)]'
-          )}
-          placeholder="Paste tweet text or URL here..."
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          disabled={isLoading || isFetchingUrl}
-          aria-label="Tweet text or URL input"
-          autoFocus
-        />
-        <div className="flex flex-col gap-3 pt-1">
-          <div className="text-sm text-[#6B7280]">
+        <div className={cn('input-shell', flashInput && 'border-[var(--brand-500)] shadow-[0_0_0_3px_rgba(37,99,235,0.18)]')}>
+          <textarea
+            id="tweet-query"
+            className="w-full p-4 bg-transparent outline-none text-[var(--text-body)] placeholder:text-[var(--text-faint)] font-medium text-base resize-none min-h-[144px] rounded-[inherit]"
+            placeholder="Paste tweet text or URL here..."
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            disabled={isLoading || isFetchingUrl}
+            aria-label="Tweet text or URL input"
+            autoFocus
+          />
+        </div>
+        <div className="flex flex-col items-center gap-2.5 pt-2">
+          <div className="text-helper">
             {input.length > 0 ? `${input.length} characters` : 'Supports X/Twitter URLs and plain text'}
           </div>
           <button
             type="submit"
             disabled={isLoading || isFetchingUrl || !input.trim()}
             className={cn(
-              'w-full md:w-auto md:min-w-[260px] md:self-center px-8 py-3 rounded-lg font-semibold text-base text-white transition-all duration-200 ease-in-out flex items-center justify-center gap-2',
+              'btn btn-primary w-full sm:w-[240px] h-12 px-6 text-[15px]',
               isLoading || isFetchingUrl
-                ? 'bg-slate-400 cursor-not-allowed'
-                : 'bg-[#2563EB] hover:bg-[#1D4ED8] hover:shadow-[0_4px_6px_rgba(37,99,235,0.25),0_2px_4px_rgba(37,99,235,0.15)] hover:-translate-y-px active:bg-[#1E40AF] active:translate-y-0 active:shadow-[0_2px_4px_rgba(37,99,235,0.2)]'
+                ? 'bg-[#93C5FD] border-[#93C5FD] shadow-none'
+                : ''
             )}
           >
             {isLoading || isFetchingUrl ? (
@@ -120,7 +119,7 @@ export default function SearchInput({ onSearch, isLoading, prefillText = '' }) {
               </>
             ) : (
               <>
-                <span>Paste and Search</span>
+                <span>Search for copies</span>
                 <Search size={18} />
               </>
             )}
@@ -129,7 +128,7 @@ export default function SearchInput({ onSearch, isLoading, prefillText = '' }) {
       </form>
 
       {error && (
-        <div className="mt-3 p-3 bg-[var(--danger-50)] text-[var(--danger-600)] rounded-xl border border-red-100 flex items-start gap-2">
+        <div className="mt-3 p-3 bg-[var(--danger-50)] text-[var(--danger-600)] rounded-[var(--radius-sm)] border border-red-100 flex items-start gap-2">
           <AlertCircle size={16} className="mt-0.5 shrink-0" />
           <p className="text-sm font-medium">{error}</p>
         </div>
