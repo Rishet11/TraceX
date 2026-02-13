@@ -50,6 +50,7 @@ export default function Home() {
   const [selfDuplicates, setSelfDuplicates] = useState([]);
   const [loading, setLoading] = useState(false);
   const [searchStatus, setSearchStatus] = useState('idle');
+  const [searchErrorMessage, setSearchErrorMessage] = useState('');
   const [searchMeta, setSearchMeta] = useState(null);
   const [lastSearchOptions, setLastSearchOptions] = useState({ queryInputType: 'text' });
   const [shareWarning, setShareWarning] = useState('');
@@ -86,6 +87,7 @@ export default function Home() {
 
     setLoading(true);
     setSearchStatus('loading');
+    setSearchErrorMessage('');
     setQuery(searchText);
     setLastSearchOptions(normalizedOptions);
     setResults([]);
@@ -116,6 +118,9 @@ export default function Home() {
         setSearchMeta(data.meta || null);
         setResults([]);
         setSelfDuplicates([]);
+        setSearchErrorMessage(
+          data.error || data.details || 'We could not complete the search right now. Please retry.'
+        );
         setSearchStatus('error');
         return;
       }
@@ -156,12 +161,14 @@ export default function Home() {
       setResults(resultsWithScores);
       setSelfDuplicates(selfDuplicatesWithScores);
       setSearchMeta(data.meta || null);
+      setSearchErrorMessage('');
       setSearchStatus('success');
       setShareWarning('');
     } catch (error) {
       console.error('Unexpected search request error:', error);
       setResults([]);
       setSelfDuplicates([]);
+      setSearchErrorMessage('Network issue while searching. Please retry.');
       setSearchStatus('error');
     } finally {
       setLoading(false);
@@ -289,6 +296,7 @@ export default function Home() {
     setSortBy('date');
     setHideRetweets(false);
     setSearchStatus('idle');
+    setSearchErrorMessage('');
     setSearchMeta(null);
     setShareWarning('');
     setShowFiltersMobile(false);
@@ -751,7 +759,8 @@ export default function Home() {
                   <p className="text-ui max-w-md mx-auto">
                     {isDegradedSources
                       ? 'Search providers are currently busy. Try again in a few seconds.'
-                      : 'We could not complete the search right now. Please retry or search directly on X.'}
+                      : searchErrorMessage ||
+                        'We could not complete the search right now. Please retry or search directly on X.'}
                   </p>
                   <div className="flex flex-col sm:flex-row items-center justify-center gap-2">
                     <button onClick={() => handleSearch(query, lastSearchOptions)} className="btn btn-primary px-5 py-2.5">
