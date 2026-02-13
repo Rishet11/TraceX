@@ -276,7 +276,7 @@ test('generic query routes fallback priority to bing/jina before duckduckgo', as
 
   assert.equal(response.status, 200);
   assert.equal(response.body.results[0].source, 'bing');
-  assert.equal(callOrder[0], 'bing');
+  assert.ok(callOrder.includes('bing'));
 });
 
 test('returns cached results for repeated identical query in fast mode', async () => {
@@ -301,4 +301,52 @@ test('returns cached results for repeated identical query in fast mode', async (
   assert.equal(second.status, 200);
   assert.equal(nitterCalls, 1);
   assert.equal(second.body.meta.cacheHit, true);
+});
+
+test('prefers highest-priority fallback source when parallel sources both return hits', async () => {
+  const response = await runSearchPipeline(
+    { query: 'good morning', queryInputType: 'text' },
+    {
+      searchNitterFn: async () => ({ results: [], instance: 'nitter.test' }),
+      searchDuckDuckGoFn: async () => ({ results: [], instance: 'DuckDuckGo' }),
+      searchBingFn: async () => ({ results: [makeTweet(81, 'bing match')], instance: 'Bing RSS' }),
+      searchJinaFn: async () => ({ results: [makeTweet(82, 'jina match')], instance: 'Jina Mirror' }),
+      enrichTweetMetricsFn: async (results) => results,
+    }
+  );
+
+  assert.equal(response.status, 200);
+  assert.equal(response.body.results.length, 1);
+  assert.equal(response.body.results[0].source, 'bing');
+});
+
+test('reuses source-level cache across repeated queries when response cache is disabled', async () => {
+  let nitterCalls = 0;
+  let bingCalls = 0;
+  const query = 'source cache behavior unique tracex query';
+
+  const deps = {
+    enableCache: false,
+    enableSourceCache: true,
+    searchNitterFn: async () => {
+      nitterCalls += 1;
+      return { results: [], instance: 'nitter.test' };
+    },
+    searchDuckDuckGoFn: async () => ({ results: [], instance: 'DuckDuckGo' }),
+    searchBingFn: async () => {
+      bingCalls += 1;
+      return { results: [makeTweet(903, query)], instance: 'Bing RSS' };
+    },
+    searchJinaFn: async () => ({ results: [], instance: 'Jina Mirror' }),
+    enrichTweetMetricsFn: async (results) => results,
+  };
+
+  const first = await runSearchPipeline({ query, queryInputType: 'text' }, deps);
+  const second = await runSearchPipeline({ query, queryInputType: 'text' }, deps);
+
+  assert.equal(first.status, 200);
+  assert.equal(second.status, 200);
+  assert.equal(nitterCalls, 1);
+  assert.equal(bingCalls, 1);
+  assert.ok(second.body.meta.sourceCacheHits >= 1);
 });
