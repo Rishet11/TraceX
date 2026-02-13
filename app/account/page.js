@@ -9,19 +9,19 @@ export default function AccountPage() {
   return (
     <div className="min-h-screen flex flex-col">
       <AppHeader />
-      <main className="flex-1 page-section">
-        <div className="app-container space-y-6">
-          <section className="surface-elevated px-6 py-8 md:p-10 space-y-2">
-            <h1 className="text-hero text-slate-900">Account and billing</h1>
+      <main className="flex-1 section-block">
+        <div className="container-main space-y-6">
+          <section className="surface px-6 py-8 md:p-10 space-y-2">
+            <h1 className="display-xl">Account and billing</h1>
             <p className="text-helper max-w-2xl">
               Manage your subscription, payment method, and invoices in one place.
             </p>
           </section>
 
-          <section className="surface-card p-6 space-y-4">
+          <section className="surface p-6 space-y-4">
             <div>
-              <h2 className="text-xl font-bold text-slate-900">Billing Portal</h2>
-              <p className="text-sm text-slate-600 mt-1">
+              <h2 className="text-xl font-bold text-[var(--text-title)]">Billing Portal</h2>
+              <p className="text-sm text-[var(--text-muted)] mt-1">
                 Use the portal to update your plan and billing details.
               </p>
             </div>
@@ -32,7 +32,7 @@ export default function AccountPage() {
                   href={portalUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-slate-900 text-white font-semibold hover:bg-black transition-colors"
+                  className="btn btn-primary px-4 py-2.5"
                 >
                   Open Billing Portal <ExternalLink size={16} />
                 </a>
@@ -49,14 +49,14 @@ export default function AccountPage() {
             )}
           </section>
 
-          <section className="surface-card p-6 space-y-3">
-            <h3 className="text-lg font-bold text-slate-900">Need help?</h3>
-            <p className="text-sm text-slate-600">
+          <section className="surface p-6 space-y-3">
+            <h3 className="text-lg font-bold text-[var(--text-title)]">Need help?</h3>
+            <p className="text-sm text-[var(--text-muted)]">
               For billing questions or account access issues, reach support.
             </p>
             <Link
               href="/contact"
-              className="inline-flex items-center gap-2 w-fit px-4 py-2 rounded-lg border border-[var(--border)] bg-white hover:bg-slate-50 font-medium text-slate-700"
+              className="btn btn-secondary w-fit px-4 py-2"
             >
               <LifeBuoy size={16} />
               Contact support
