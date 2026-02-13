@@ -29,6 +29,27 @@ test('runCheckoutPipeline returns checkout URL for valid request', async () => {
   }
 });
 
+test('runCheckoutPipeline uses yearly variant when yearly plan is selected', async () => {
+  const prevYearly = process.env.LEMONSQUEEZY_PRO_YEARLY_VARIANT_ID;
+  process.env.LEMONSQUEEZY_PRO_YEARLY_VARIANT_ID = '9999';
+
+  try {
+    const out = await runCheckoutPipeline(
+      { plan: 'pro_yearly', email: 'user@example.com' },
+      {
+        createCheckoutFn: async ({ variantId }) => {
+          assert.equal(variantId, '9999');
+          return { checkoutUrl: 'https://checkout.example.com/yearly' };
+        },
+      }
+    );
+    assert.equal(out.status, 200);
+    assert.equal(out.body.url, 'https://checkout.example.com/yearly');
+  } finally {
+    process.env.LEMONSQUEEZY_PRO_YEARLY_VARIANT_ID = prevYearly;
+  }
+});
+
 test('runCheckoutPipeline maps provider failure', async () => {
   const prev = process.env.LEMONSQUEEZY_PRO_VARIANT_ID;
   process.env.LEMONSQUEEZY_PRO_VARIANT_ID = '1234';
