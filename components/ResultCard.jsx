@@ -54,6 +54,7 @@ export default function ResultCard({ tweet, similarity, badges, originalText }) 
       : similarity >= 70
         ? 'text-amber-700 bg-amber-50 border-amber-200'
         : 'text-slate-700 bg-slate-50 border-slate-200';
+
   const formatMetric = (value) => {
     if (Number.isFinite(value)) return compactNumber.format(value);
     const raw = String(value ?? '').trim();
@@ -65,6 +66,7 @@ export default function ResultCard({ tweet, similarity, badges, originalText }) 
     if (Number.isFinite(numeric)) return compactNumber.format(numeric);
     return '0';
   };
+
   const source = sourceLabel(tweet?.source);
 
   const handleAnalyze = async () => {
@@ -102,9 +104,9 @@ export default function ResultCard({ tweet, similarity, badges, originalText }) 
   };
 
   return (
-    <article className="surface-card surface-interactive p-5 md:p-6">
-      <header className="flex items-start justify-between gap-3 mb-5">
-        <div className="flex items-center gap-3 min-w-0">
+    <article className="surface surface-hover p-4 md:p-5">
+      <header className="flex items-start justify-between gap-3 md:gap-4 mb-4">
+        <div className="flex items-start gap-3 min-w-0">
           <div className="relative shrink-0">
             <Image
               src={avatarSrc}
@@ -117,41 +119,41 @@ export default function ResultCard({ tweet, similarity, badges, originalText }) 
               onError={() => setAvatarSrc(DEFAULT_AVATAR)}
             />
           </div>
+
           <div className="min-w-0">
-            <div className="font-bold text-slate-900 leading-tight text-lg truncate">
+            <p className="font-bold text-[var(--text-title)] leading-tight text-lg truncate">
               {tweet?.author?.fullname || 'Unknown'}
-            </div>
-            <div className="text-slate-500 text-sm truncate">
+            </p>
+            <p className="text-[var(--text-muted)] text-sm truncate">
               @{String(tweet?.author?.username || 'unknown').replace(/^@+/, '')}
-            </div>
-            {source && (
-              <div className="mt-1 text-[11px] inline-flex items-center px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 border border-slate-200">
-                {source}
-              </div>
-            )}
+            </p>
+            {source && <span className="chip mt-1">{source}</span>}
           </div>
         </div>
 
         <div className="shrink-0 text-right space-y-1">
-          <div className={cn('px-3 py-1.5 rounded-full text-sm font-bold border shadow-sm', similarityColor)}>
+          <div className={cn('px-3 py-1.5 rounded-full text-sm font-bold border', similarityColor)}>
             {similarity}% Match
           </div>
-          <p className="text-[11px] text-slate-600" title="Based on textual similarity, structure overlap, and ranking quality signals.">
-            Why this match?
+          <p
+            className="text-[11px] text-[var(--text-muted)]"
+            title="Based on textual similarity, structure overlap, and ranking quality signals."
+          >
+            Similarity + quality
           </p>
         </div>
       </header>
 
-      <p className="text-slate-800 text-base md:text-lg mb-5 whitespace-pre-wrap break-words leading-[1.6]">
+      <p className="text-[var(--text-body)] text-[15px] md:text-base mb-4 whitespace-pre-wrap break-words leading-[1.58]">
         {tweet?.content || ''}
       </p>
 
       {badges && badges.length > 0 && (
-        <div className="flex flex-wrap gap-2 mb-5">
+        <div className="flex flex-wrap gap-2 mb-4">
           {badges.map((badge, index) => (
             <span
               key={index}
-              className="px-2.5 py-1 bg-[var(--brand-50)] text-[var(--brand-600)] text-xs rounded-lg font-semibold border border-[var(--brand-100)] tracking-wide uppercase"
+              className="px-2.5 py-1 bg-[var(--brand-50)] text-[var(--brand-700)] text-xs rounded-lg font-semibold border border-[var(--brand-100)]"
             >
               {badge}
             </span>
@@ -159,8 +161,8 @@ export default function ResultCard({ tweet, similarity, badges, originalText }) 
         </div>
       )}
 
-      <div className="pt-4 border-t border-slate-100 space-y-3.5">
-        <div className="flex flex-wrap gap-x-4 gap-y-2 text-slate-500 text-sm">
+      <div className="pt-3 border-t border-slate-100 space-y-3">
+        <div className="flex flex-wrap gap-x-4 gap-y-2 text-[var(--text-muted)] text-sm">
           <span className="flex items-center gap-1.5" title="Replies">
             <MessageCircle size={17} />
             <span className="font-medium">{formatMetric(stats.replies)}</span>
@@ -188,23 +190,23 @@ export default function ResultCard({ tweet, similarity, badges, originalText }) 
             <div className="flex flex-col gap-1">
               <button
                 onClick={handleAnalyze}
-                className="flex items-center gap-1.5 text-violet-700 hover:text-violet-900 hover:bg-violet-50 px-3 py-1.5 rounded-lg font-medium transition-all text-xs border border-transparent hover:border-violet-100 w-fit"
+                className="btn btn-ghost px-3 py-1.5 text-xs border border-transparent hover:border-violet-100 hover:bg-violet-50 hover:text-violet-800 w-fit"
                 disabled={isAnalyzing}
               >
                 <Sparkles size={14} /> Analyze with AI
               </button>
-              <p className="text-[11px] text-slate-600">See if this looks like likely idea theft.</p>
+              <p className="text-[11px] text-[var(--text-muted)]">See if this looks like likely idea theft.</p>
             </div>
           )}
 
-          <span className="flex items-center gap-1.5 text-slate-600 text-xs">
+          <span className="flex items-center gap-1.5 text-[var(--text-muted)] text-xs">
             <Calendar size={15} /> {tweet?.relativeDate || 'Recently found'}
           </span>
           <a
             href={tweet?.url}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center gap-1.5 text-slate-900 bg-slate-100 hover:bg-slate-200 px-3 py-1.5 rounded-lg font-medium transition-all text-xs"
+            className="btn btn-secondary px-3 py-1.5 text-xs"
           >
             View Tweet <ExternalLink size={14} />
           </a>
@@ -212,30 +214,30 @@ export default function ResultCard({ tweet, similarity, badges, originalText }) 
       </div>
 
       {isAnalyzing && (
-        <div className="mt-5 p-3 bg-violet-50 rounded-xl border border-violet-100 animate-pulse flex items-center gap-3">
+        <div className="mt-5 p-3 bg-violet-50 rounded-[var(--radius-sm)] border border-violet-100 animate-pulse flex items-center gap-3">
           <Sparkles className="text-violet-500" size={18} />
           <span className="text-violet-700 font-medium text-sm">Analyzing similarity with AI...</span>
         </div>
       )}
 
       {error && (
-        <div className="mt-5 p-3 bg-[var(--danger-50)] text-[var(--danger-600)] rounded-lg text-sm border border-red-100 flex items-center gap-2">
+        <div className="mt-5 p-3 bg-[var(--danger-50)] text-[var(--danger-600)] rounded-[var(--radius-sm)] text-sm border border-red-100 flex items-center gap-2">
           <AlertCircle size={16} /> {error}
         </div>
       )}
 
       {analysis && (
-        <div className="mt-5 bg-violet-50 rounded-xl border border-violet-100 p-4">
+        <div className="mt-5 bg-violet-50/80 rounded-[var(--radius-md)] border border-violet-100 p-4">
           <div className="flex flex-wrap items-center justify-between mb-2 gap-2">
             <h4 className="font-bold text-violet-900 flex items-center gap-2">
               <Sparkles size={16} className="text-violet-600" />
               AI Verdict: {analysis.verdict}
             </h4>
-            <span className="bg-white text-violet-700 px-2 py-1 rounded-md text-xs font-bold border border-violet-100 shadow-sm">
+            <span className="bg-white text-violet-700 px-2 py-1 rounded-md text-xs font-bold border border-violet-100">
               {analysis.score}/100 Confidence
             </span>
           </div>
-          <p className="text-violet-900/90 text-sm leading-relaxed">{analysis.explanation}</p>
+          <p className="text-violet-900/85 text-sm leading-relaxed">{analysis.explanation}</p>
         </div>
       )}
     </article>

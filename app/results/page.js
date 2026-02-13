@@ -84,20 +84,21 @@ function ResultsContent() {
   }, [results]);
 
   return (
-    <div className="app-container space-y-5">
+    <div className="container-main space-y-5">
       <button
         onClick={() => router.push('/')}
-        className="inline-flex items-center gap-2 text-sm text-slate-600 hover:text-slate-900 transition-colors px-3 py-2 rounded-lg bg-white border border-[var(--border)]"
+        className="btn btn-secondary px-3 py-2 text-sm"
       >
         <ArrowLeft size={18} /> Back to Search
       </button>
 
-      <section className="surface-card p-5 md:p-6">
-        <h1 className="text-section-title text-slate-900">Shared Search Results</h1>
-        <p className="mt-2 text-slate-600">
-          Original query: <span className="font-medium text-slate-900">&quot;{query || 'N/A'}&quot;</span>
+      <section className="surface p-6 md:p-7">
+        <h1 className="heading-lg">Shared Search Results</h1>
+        <p className="mt-2 text-ui">
+          Original query:{' '}
+          <span className="font-medium text-[var(--text-title)]">&quot;{query || 'N/A'}&quot;</span>
         </p>
-        <p className="text-sm text-slate-500 mt-1">Found {processedData.normalized.length} matches</p>
+        <p className="text-helper mt-1">Found {processedData.normalized.length} matches</p>
       </section>
 
       <section className="space-y-4">
@@ -121,7 +122,7 @@ function ResultsContent() {
         })}
 
         {processedData.normalized.length === 0 && (
-          <div className="surface-card text-center py-10 text-slate-500">
+          <div className="surface text-center py-10 text-[var(--text-muted)]">
             No results found in this shared link.
           </div>
         )}
@@ -134,8 +135,8 @@ export default function ResultsPage() {
   return (
     <div className="min-h-screen flex flex-col">
       <AppHeader />
-      <main className="flex-1 page-section">
-        <Suspense fallback={<div className="app-container text-slate-500">Loading shared results...</div>}>
+      <main className="flex-1 section-block">
+        <Suspense fallback={<div className="container-main text-[var(--text-muted)]">Loading shared results...</div>}>
           <ResultsContent />
         </Suspense>
       </main>
