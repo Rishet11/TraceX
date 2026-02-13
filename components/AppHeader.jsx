@@ -1,39 +1,41 @@
 'use client';
 
 import Link from 'next/link';
-import { Sparkles } from 'lucide-react';
+import { Compass, Sparkles } from 'lucide-react';
 import { trackEvent } from '@/lib/analytics';
 
 export default function AppHeader() {
   return (
-    <header className="sticky top-0 z-20 border-b border-[var(--border)] bg-white/90 backdrop-blur">
-      <div className="app-container py-3 flex flex-wrap items-center justify-between gap-3">
+    <header className="sticky top-0 z-30 border-b border-[var(--line)] bg-white/92 backdrop-blur-md">
+      <div className="container-main py-3.5 flex items-center justify-between gap-4">
         <Link
           href="/"
-          className="flex items-center gap-2 text-slate-900 font-semibold tracking-tight min-w-0"
+          className="flex items-center gap-3 text-[var(--text-title)] font-semibold tracking-tight min-w-0"
         >
-          <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-[var(--brand-50)] text-[var(--brand-600)] border border-[var(--brand-100)] shrink-0">
-            <Sparkles size={14} />
+          <span className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-[var(--brand-50)] text-[var(--brand-700)] border border-[var(--brand-100)] shrink-0">
+            <Sparkles size={15} />
           </span>
-          <span className="truncate">
+          <span className="truncate leading-tight">
             Tweet Copy Detector
-            <span className="block text-[11px] font-medium text-slate-500 tracking-normal">
-              Copy-check for creators
+            <span className="block text-[11px] font-medium text-[var(--text-muted)] tracking-normal">
+              Fast copy-check for creators
             </span>
           </span>
         </Link>
-        <nav className="flex items-center gap-2 text-[15px] ml-auto">
+
+        <nav className="flex items-center gap-1 text-[15px] ml-auto">
           <Link
             href="/pricing"
-            className="px-2 py-1.5 rounded-md text-[#374151] font-medium hover:text-[#2563EB] hover:underline underline-offset-2 transition-colors duration-150"
+            className="btn btn-ghost px-3 py-2 text-sm"
             onClick={() => trackEvent('pricing_clicked', { source: 'header_nav' })}
           >
             Pricing
           </Link>
           <Link
             href="/account"
-            className="px-2 py-1.5 rounded-md text-[#374151] font-medium hover:text-[#2563EB] hover:underline underline-offset-2 transition-colors duration-150"
+            className="btn btn-secondary px-3 py-2 text-sm"
           >
+            <Compass size={15} />
             Account
           </Link>
         </nav>
