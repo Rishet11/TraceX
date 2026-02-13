@@ -115,6 +115,90 @@ test('excludes source tweet by username + content fallback when ids are unreliab
   assert.equal(response.body.results[0].author.username, 'copycat_user');
 });
 
+test('excludes source tweet when author username is missing but URL identity matches', async () => {
+  const sourceContent = 'Name a career that AI cannot replace.';
+  const sameSourceNoUsername = {
+    ...makeTweet(999, sourceContent),
+    tweetId: '999',
+    url: 'https://x.com/justbyte_/status/123',
+    author: { fullname: 'Aryan' },
+  };
+  const trueCopy = {
+    ...makeTweet(555, sourceContent),
+    tweetId: '555',
+    url: 'https://x.com/copycat_user/status/555',
+    author: { fullname: 'Another', username: 'copycat_user' },
+  };
+
+  const response = await runSearchPipeline(
+    {
+      query: sourceContent,
+      queryInputType: 'url_text_extracted',
+      excludeTweetId: '123',
+      excludeUsername: '@justbyte_',
+      excludeContent: sourceContent,
+    },
+    {
+      searchNitterFn: async () => ({
+        results: [sameSourceNoUsername, trueCopy],
+        instance: 'nitter.test',
+      }),
+      searchDuckDuckGoFn: async () => ({ results: [], instance: 'DuckDuckGo' }),
+      searchBingFn: async () => ({ results: [], instance: 'Bing RSS' }),
+      searchJinaFn: async () => ({ results: [], instance: 'Jina Mirror' }),
+      enrichTweetMetricsFn: async (results) => results,
+    }
+  );
+
+  assert.equal(response.status, 200);
+  assert.equal(response.body.results.length, 1);
+  assert.equal(response.body.results[0].author.username, 'copycat_user');
+  assert.equal(response.body.meta.excludedCount, 1);
+});
+
+test('separates same-author duplicates from external copy results', async () => {
+  const sourceContent = 'Build in public and show your receipts';
+  const sameAuthorDuplicate = {
+    ...makeTweet(777, sourceContent),
+    tweetId: '777',
+    url: 'https://x.com/original_author/status/777',
+    author: { fullname: 'Original', username: 'original_author' },
+  };
+  const externalCopy = {
+    ...makeTweet(888, sourceContent),
+    tweetId: '888',
+    url: 'https://x.com/copycat_user/status/888',
+    author: { fullname: 'Copycat', username: 'copycat_user' },
+  };
+
+  const response = await runSearchPipeline(
+    {
+      query: sourceContent,
+      queryInputType: 'url_text_extracted',
+      excludeTweetId: '123',
+      excludeUsername: '@original_author',
+      excludeContent: sourceContent,
+    },
+    {
+      searchNitterFn: async () => ({
+        results: [sameAuthorDuplicate, externalCopy],
+        instance: 'nitter.test',
+      }),
+      searchDuckDuckGoFn: async () => ({ results: [], instance: 'DuckDuckGo' }),
+      searchBingFn: async () => ({ results: [], instance: 'Bing RSS' }),
+      searchJinaFn: async () => ({ results: [], instance: 'Jina Mirror' }),
+      enrichTweetMetricsFn: async (results) => results,
+    }
+  );
+
+  assert.equal(response.status, 200);
+  assert.equal(response.body.results.length, 1);
+  assert.equal(response.body.results[0].author.username, 'copycat_user');
+  assert.equal(response.body.selfDuplicates.length, 1);
+  assert.equal(response.body.selfDuplicates[0].author.username, 'original_author');
+  assert.equal(response.body.meta.selfDuplicatesCount, 1);
+});
+
 test('uses Bing fallback when nitter and ddg return no results', async () => {
   const response = await runSearchPipeline(
     { query: 'hello world this is long enough' },
