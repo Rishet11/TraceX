@@ -10,7 +10,7 @@ export default function AppFooter() {
           </p>
           <nav className="text-sm font-medium text-[var(--text-muted)] flex flex-wrap items-center gap-4 md:gap-6">
             <Link href="/pricing" className="link-ui hover:underline underline-offset-4">
-              Pricing
+              Free beta
             </Link>
             <Link href="/terms" className="link-ui hover:underline underline-offset-4">
               Terms

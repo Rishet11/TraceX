@@ -18,7 +18,7 @@ export default function AppHeader() {
           <span className="truncate leading-tight">
             TraceX
             <span className="block text-[11px] font-medium text-[var(--text-muted)] tracking-normal">
-              Fast copy tracking for creators
+              Fast tweet copy checking for anyone
             </span>
           </span>
         </Link>
@@ -27,9 +27,9 @@ export default function AppHeader() {
           <Link
             href="/pricing"
             className="btn btn-ghost px-3 py-2 text-sm"
-            onClick={() => trackEvent('pricing_clicked', { source: 'header_nav' })}
+            onClick={() => trackEvent('beta_clicked', { source: 'header_nav' })}
           >
-            Pricing
+            Free beta
           </Link>
           <a
             href="https://x.com/MehraRishe90311"
