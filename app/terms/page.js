@@ -34,18 +34,18 @@ export default function TermsPage() {
             </div>
 
             <div>
-              <h2 className="text-lg font-bold text-slate-900">Payments and subscriptions</h2>
+              <h2 className="text-lg font-bold text-slate-900">Free beta terms</h2>
               <p className="mt-1">
-                Paid plans are billed through Lemon Squeezy. Subscription terms, renewals, and
-                invoicing are managed in your billing portal.
+                The current release is a free beta experience. Feature availability can evolve over
+                time as we improve reliability and product quality.
               </p>
             </div>
 
             <div>
               <h2 className="text-lg font-bold text-slate-900">Questions</h2>
               <p className="mt-1">
-                Contact us via the <Link href="/contact" className="underline">support page</Link> for
-                account or billing questions.
+                Contact us via the <Link href="/contact" className="underline">support page</Link>{' '}
+                for product or usage questions.
               </p>
             </div>
           </section>

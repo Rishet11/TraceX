@@ -10,7 +10,7 @@ export default function PrivacyPage() {
           <section className="surface px-6 py-8 md:p-10 space-y-2">
             <h1 className="display-xl text-slate-900">Privacy Policy</h1>
             <p className="text-helper max-w-2xl">
-              This page explains what data is processed to run searches and billing.
+              This page explains what data is processed to run searches and related product features.
             </p>
           </section>
 
@@ -32,10 +32,10 @@ export default function PrivacyPage() {
             </div>
 
             <div>
-              <h2 className="text-lg font-bold text-slate-900">Payments</h2>
+              <h2 className="text-lg font-bold text-slate-900">Payment data during beta</h2>
               <p className="mt-1">
-                Payments, invoices, and subscriptions are handled by Lemon Squeezy. We do not store
-                your full card details in this app.
+                The app currently runs as free beta, so no payment collection flow is active inside
+                the product.
               </p>
             </div>
 
