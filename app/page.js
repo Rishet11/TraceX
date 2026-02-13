@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useMemo, useEffect, useRef } from 'react';
-import Link from 'next/link';
 import { ArrowDownUp, Filter, Share2 } from 'lucide-react';
 import SearchInput from '@/components/SearchInput';
 import ResultCard from '@/components/ResultCard';
@@ -12,22 +11,11 @@ import { withQualityScores } from '@/lib/ranking';
 import { encodeShareData } from '@/lib/urlEncoder';
 import { trackEvent } from '@/lib/analytics';
 
-const LOADING_MESSAGES = [
-  'Finding copies... ⏱️ ~15 seconds',
-  'Checking multiple sources...',
-  'Ranking possible matches...',
+const LOADING_STEPS = [
+  { label: 'Preparing query', message: 'Searching public posts...' },
+  { label: 'Checking sources', message: 'Checking multiple sources...' },
+  { label: 'Ranking matches', message: 'Scoring likely matches...' },
 ];
-
-const DEMO_MATCH_PREVIEW = {
-  author: 'Maya Patel',
-  handle: '@mayabuilds',
-  content: 'Shipping in public works when you show receipts, not just claims.',
-  score: 94,
-  likes: '2.1K',
-  retweets: '380',
-  replies: '129',
-  posted: '3h ago',
-};
 
 function parseMetricValue(value) {
   if (Number.isFinite(value)) return Number(value);
@@ -59,6 +47,7 @@ export default function Home() {
   const [sortBy, setSortBy] = useState('date');
   const [showFiltersMobile, setShowFiltersMobile] = useState(false);
   const [loadingStep, setLoadingStep] = useState(0);
+  const [loadingElapsedSeconds, setLoadingElapsedSeconds] = useState(0);
   const trackedResultQueryRef = useRef('');
 
   useEffect(() => {
@@ -68,12 +57,19 @@ export default function Home() {
   useEffect(() => {
     if (!loading) {
       setLoadingStep(0);
+      setLoadingElapsedSeconds(0);
       return;
     }
-    const interval = setInterval(() => {
-      setLoadingStep((prev) => (prev + 1) % LOADING_MESSAGES.length);
-    }, 1300);
-    return () => clearInterval(interval);
+    const stepInterval = setInterval(() => {
+      setLoadingStep((prev) => Math.min(prev + 1, LOADING_STEPS.length - 1));
+    }, 1800);
+    const elapsedInterval = setInterval(() => {
+      setLoadingElapsedSeconds((prev) => prev + 1);
+    }, 1000);
+    return () => {
+      clearInterval(stepInterval);
+      clearInterval(elapsedInterval);
+    };
   }, [loading]);
 
   const handleSearch = async (searchText, options = {}) => {
@@ -288,6 +284,7 @@ export default function Home() {
   const visibleMatches = processedData.sorted.length;
   const isShareSuccess = shareWarning.toLowerCase().includes('copied');
   const isUrlModeSearch = lastSearchOptions?.queryInputType === 'url_text_extracted';
+  const showSlowSearchHint = loadingElapsedSeconds >= 8;
   const resetSearch = () => {
     setQuery('');
     setResults([]);
@@ -355,31 +352,36 @@ export default function Home() {
             <>
               <section className="mt-7 surface p-5 md:p-6 space-y-3.5">
                 <div>
-                  <h2 className="heading-lg">See it in action</h2>
-                  <p className="text-helper mt-1">Example result preview</p>
+                  <h2 className="heading-lg">What you get after each search</h2>
+                  <p className="text-helper mt-1">
+                    Clear results with confidence scores and direct source context.
+                  </p>
                 </div>
 
-                <div className="surface-soft p-4 md:p-5 space-y-3.5">
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <p className="text-base font-bold text-[var(--text-title)]">{DEMO_MATCH_PREVIEW.author}</p>
-                      <p className="text-sm text-[var(--text-muted)] mt-0.5">{DEMO_MATCH_PREVIEW.handle}</p>
-                    </div>
-                    <div className="text-right space-y-2">
-                      <span className="chip">Example</span>
-                      <span className="chip !bg-[var(--success-50)] !text-[var(--success-600)] !border-green-200">
-                        {DEMO_MATCH_PREVIEW.score}% Match
-                      </span>
-                    </div>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div className="surface-soft p-4">
+                    <p className="text-sm font-medium text-[var(--text-body)] flex items-start gap-2">
+                      <span className="text-[var(--success-600)] mt-0.5">✓</span>
+                      Match confidence score (0-100)
+                    </p>
                   </div>
-
-                  <p className="text-ui">{DEMO_MATCH_PREVIEW.content}</p>
-
-                  <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-[var(--text-muted)]">
-                    <span>{DEMO_MATCH_PREVIEW.replies} replies</span>
-                    <span>{DEMO_MATCH_PREVIEW.retweets} reposts</span>
-                    <span>{DEMO_MATCH_PREVIEW.likes} likes</span>
-                    <span>{DEMO_MATCH_PREVIEW.posted}</span>
+                  <div className="surface-soft p-4">
+                    <p className="text-sm font-medium text-[var(--text-body)] flex items-start gap-2">
+                      <span className="text-[var(--success-600)] mt-0.5">✓</span>
+                      External copies vs same-author repeats
+                    </p>
+                  </div>
+                  <div className="surface-soft p-4">
+                    <p className="text-sm font-medium text-[var(--text-body)] flex items-start gap-2">
+                      <span className="text-[var(--success-600)] mt-0.5">✓</span>
+                      Replies, reposts, likes, views, and bookmarks
+                    </p>
+                  </div>
+                  <div className="surface-soft p-4">
+                    <p className="text-sm font-medium text-[var(--text-body)] flex items-start gap-2">
+                      <span className="text-[var(--success-600)] mt-0.5">✓</span>
+                      Open tweet source + shareable result link
+                    </p>
                   </div>
                 </div>
               </section>
@@ -418,17 +420,40 @@ export default function Home() {
 
               {searchStatus === 'loading' && (
                 <div className="space-y-4">
-                  <div className="surface p-5 text-center space-y-2.5">
-                    <p className="text-[var(--text-title)] font-semibold">{LOADING_MESSAGES[loadingStep]}</p>
-                    <p className="text-helper">Usually takes 5–15 seconds.</p>
-                    <div className="flex justify-center gap-1.5 pt-1">
-                      {LOADING_MESSAGES.map((_, idx) => (
-                        <span
-                          key={idx}
-                          className={`h-2.5 w-2.5 rounded-full transition-all ${idx === loadingStep ? 'bg-[var(--brand-500)] scale-110' : 'bg-slate-300'}`}
-                        />
-                      ))}
+                  <div className="surface p-5 md:p-6 space-y-3.5">
+                    <div className="text-center space-y-1.5">
+                      <p className="text-[var(--text-title)] font-semibold">
+                        {LOADING_STEPS[loadingStep].message}
+                      </p>
+                      <p className="text-helper">Usually takes 5–15 seconds.</p>
                     </div>
+
+                    <div className="h-2 rounded-full bg-slate-100 overflow-hidden">
+                      <div className="h-full w-2/5 rounded-full bg-gradient-to-r from-[var(--brand-400)] via-[var(--brand-600)] to-[var(--brand-400)] animate-pulse" />
+                    </div>
+
+                    <div className="grid gap-2 sm:grid-cols-3 text-xs">
+                      {LOADING_STEPS.map((step, idx) => {
+                        const isActive = idx === loadingStep;
+                        const isDone = idx < loadingStep;
+                        const indicator = isDone ? '✓' : isActive ? '●' : '○';
+                        return (
+                          <div
+                            key={step.label}
+                            className={`rounded-[var(--radius-sm)] px-2.5 py-2 border text-center ${isActive ? 'bg-[var(--brand-50)] border-[var(--brand-200)] text-[var(--brand-700)]' : isDone ? 'bg-green-50 border-green-200 text-green-700' : 'bg-white border-[var(--line)] text-[var(--text-muted)]'}`}
+                          >
+                            <span className="mr-1">{indicator}</span>
+                            {step.label}
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    {showSlowSearchHint && (
+                      <p className="text-xs text-[var(--text-muted)] text-center">
+                        Still searching. Some sources are slower right now.
+                      </p>
+                    )}
                   </div>
 
                   <div className="space-y-3">
@@ -631,18 +656,11 @@ export default function Home() {
                           );
                         })}
 
-                        <div className="surface p-4 md:p-5 text-sm text-[var(--text-body)] flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-                          <div>
-                            Need unlimited checks and stronger reliability?
-                            <span className="font-semibold"> Upgrade when you are ready.</span>
-                          </div>
-                          <Link
-                            href="/pricing"
-                            className="btn btn-primary w-fit px-4 py-2"
-                            onClick={() => trackEvent('pricing_clicked', { source: 'results_nudge' })}
-                          >
-                            Compare plans
-                          </Link>
+                        <div className="surface p-4 md:p-5 text-sm text-[var(--text-body)]">
+                          <p>
+                            Free beta mode is active. All current features are available without a
+                            paywall.
+                          </p>
                         </div>
                       </>
                     )}
