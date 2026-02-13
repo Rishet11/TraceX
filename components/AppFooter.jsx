@@ -6,8 +6,7 @@ export default function AppFooter() {
       <div className="container-main py-9 md:py-11">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
           <p className="text-sm text-[var(--text-muted)] max-w-lg leading-relaxed">
-            Built for creators and founders to protect original ideas, monitor copy risk, and keep
-            clean evidence ready when needed.
+            A tool for anyone who wants to quickly check whether a tweet was copied.
           </p>
           <nav className="text-sm font-medium text-[var(--text-muted)] flex flex-wrap items-center gap-4 md:gap-6">
             <Link href="/pricing" className="link-ui hover:underline underline-offset-4">
@@ -22,6 +21,14 @@ export default function AppFooter() {
             <Link href="/contact" className="link-ui hover:underline underline-offset-4">
               Contact
             </Link>
+            <a
+              href="https://x.com/MehraRishe90311"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="link-ui hover:underline underline-offset-4"
+            >
+              Follow on X
+            </a>
           </nav>
         </div>
       </div>

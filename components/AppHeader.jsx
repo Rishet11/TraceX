@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Compass, Sparkles } from 'lucide-react';
+import { Sparkles } from 'lucide-react';
 import { trackEvent } from '@/lib/analytics';
 
 export default function AppHeader() {
@@ -16,9 +16,9 @@ export default function AppHeader() {
             <Sparkles size={15} />
           </span>
           <span className="truncate leading-tight">
-            Tweet Copy Detector
+            TraceX
             <span className="block text-[11px] font-medium text-[var(--text-muted)] tracking-normal">
-              Fast copy-check for creators
+              Fast copy tracking for creators
             </span>
           </span>
         </Link>
@@ -31,13 +31,14 @@ export default function AppHeader() {
           >
             Pricing
           </Link>
-          <Link
-            href="/account"
+          <a
+            href="https://x.com/MehraRishe90311"
+            target="_blank"
+            rel="noopener noreferrer"
             className="btn btn-secondary px-3 py-2 text-sm"
           >
-            <Compass size={15} />
-            Account
-          </Link>
+            Follow on X
+          </a>
         </nav>
       </div>
     </header>

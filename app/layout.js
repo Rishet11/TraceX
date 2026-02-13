@@ -1,8 +1,8 @@
 import "./globals.css";
 
 export const metadata = {
-  title: "Tweet Copy Detector",
-  description: "Find tweet copycats in seconds.",
+  title: "TraceX",
+  description: "Trace copied tweets and prove originality in seconds.",
 };
 
 export default function RootLayout({ children }) {
