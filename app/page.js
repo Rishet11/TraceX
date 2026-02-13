@@ -352,6 +352,21 @@ export default function Home() {
 
           {searchStatus === 'idle' && (
             <>
+              <section className="mt-5 grid gap-2.5 md:grid-cols-3">
+                <div className="surface-soft p-3.5 flex items-center gap-2.5">
+                  <span className="chip shrink-0">1</span>
+                  <p className="text-sm text-[var(--text-body)]">Paste tweet URL or text</p>
+                </div>
+                <div className="surface-soft p-3.5 flex items-center gap-2.5">
+                  <span className="chip shrink-0">2</span>
+                  <p className="text-sm text-[var(--text-body)]">TraceX scans multiple public sources</p>
+                </div>
+                <div className="surface-soft p-3.5 flex items-center gap-2.5">
+                  <span className="chip shrink-0">3</span>
+                  <p className="text-sm text-[var(--text-body)]">Review matches and share results</p>
+                </div>
+              </section>
+
               <section className="mt-7 surface p-5 md:p-6 space-y-3.5">
                 <div>
                   <h2 className="heading-lg">What you get after each search</h2>

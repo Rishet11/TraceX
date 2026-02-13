@@ -4,6 +4,12 @@ import { useEffect, useState } from 'react';
 import { AlertCircle, Loader2, Search } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
+const SAMPLE_INPUTS = [
+  'Just finished shipping v2 after 3 failed launches. Keep building.',
+  'What is one thing AI can never replace?',
+  'Build in public and show your work daily.',
+];
+
 export default function SearchInput({ onSearch, isLoading, prefillText = '' }) {
   const [input, setInput] = useState('');
   const [error, setError] = useState('');
@@ -75,6 +81,13 @@ export default function SearchInput({ onSearch, isLoading, prefillText = '' }) {
     onSearch(input, { queryInputType: 'text' });
   };
 
+  const applySample = (sample) => {
+    setInput(sample);
+    setError('');
+    setFlashInput(true);
+    setTimeout(() => setFlashInput(false), 350);
+  };
+
   return (
     <section className="surface p-4 md:p-5">
       <form onSubmit={handleSubmit} className="space-y-4">
@@ -85,6 +98,21 @@ export default function SearchInput({ onSearch, isLoading, prefillText = '' }) {
           <p className="text-helper">
             Paste a tweet URL or plain text to detect likely copy matches.
           </p>
+          <div className="mt-3">
+            <p className="text-[11px] text-[var(--text-muted)] mb-1.5">Try a sample:</p>
+            <div className="flex flex-wrap gap-1.5">
+              {SAMPLE_INPUTS.map((sample) => (
+                <button
+                  key={sample}
+                  type="button"
+                  onClick={() => applySample(sample)}
+                  className="px-2.5 py-1.5 text-[11px] rounded-full border border-[var(--line)] bg-white text-[var(--text-body)] hover:border-[var(--brand-300)] hover:bg-[var(--brand-50)] transition-colors"
+                >
+                  {sample.length > 36 ? `${sample.slice(0, 36)}...` : sample}
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
         <div className={cn('input-shell', flashInput && 'border-[var(--brand-500)] shadow-[0_0_0_3px_rgba(37,99,235,0.18)]')}>
           <textarea
