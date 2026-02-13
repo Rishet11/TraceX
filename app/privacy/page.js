@@ -5,16 +5,16 @@ export default function PrivacyPage() {
   return (
     <div className="min-h-screen flex flex-col">
       <AppHeader />
-      <main className="flex-1 page-section">
-        <div className="app-container space-y-6">
-          <section className="surface-elevated px-6 py-8 md:p-10 space-y-2">
-            <h1 className="text-hero text-slate-900">Privacy Policy</h1>
+      <main className="flex-1 section-block">
+        <div className="container-main space-y-6">
+          <section className="surface px-6 py-8 md:p-10 space-y-2">
+            <h1 className="display-xl text-slate-900">Privacy Policy</h1>
             <p className="text-helper max-w-2xl">
               This page explains what data is processed to run searches and billing.
             </p>
           </section>
 
-          <section className="surface-card p-6 space-y-5 text-sm text-slate-700">
+          <section className="surface p-6 space-y-5 text-sm text-slate-700">
             <div>
               <h2 className="text-lg font-bold text-slate-900">What we process</h2>
               <p className="mt-1">

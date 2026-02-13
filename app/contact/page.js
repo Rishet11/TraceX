@@ -6,16 +6,16 @@ export default function ContactPage() {
   return (
     <div className="min-h-screen flex flex-col">
       <AppHeader />
-      <main className="flex-1 page-section">
-        <div className="app-container space-y-6">
-          <section className="surface-elevated px-6 py-8 md:p-10 space-y-2">
-            <h1 className="text-hero text-slate-900">Contact support</h1>
+      <main className="flex-1 section-block">
+        <div className="container-main space-y-6">
+          <section className="surface px-6 py-8 md:p-10 space-y-2">
+            <h1 className="display-xl text-slate-900">Contact support</h1>
             <p className="text-helper max-w-2xl">
               Questions about billing, product bugs, or feature requests? Reach us directly.
             </p>
           </section>
 
-          <section className="surface-card p-6 space-y-4">
+          <section className="surface p-6 space-y-4">
             <div className="flex items-start gap-3">
               <Mail className="text-slate-500 mt-0.5" size={18} />
               <div>

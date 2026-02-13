@@ -6,17 +6,17 @@ export default function TermsPage() {
   return (
     <div className="min-h-screen flex flex-col">
       <AppHeader />
-      <main className="flex-1 page-section">
-        <div className="app-container space-y-6">
-          <section className="surface-elevated px-6 py-8 md:p-10 space-y-2">
-            <h1 className="text-hero text-slate-900">Terms of Service</h1>
+      <main className="flex-1 section-block">
+        <div className="container-main space-y-6">
+          <section className="surface px-6 py-8 md:p-10 space-y-2">
+            <h1 className="display-xl text-slate-900">Terms of Service</h1>
             <p className="text-helper max-w-2xl">
               By using this service, you agree to use it responsibly and follow platform rules and
               local laws.
             </p>
           </section>
 
-          <section className="surface-card p-6 space-y-5 text-sm text-slate-700">
+          <section className="surface p-6 space-y-5 text-sm text-slate-700">
             <div>
               <h2 className="text-lg font-bold text-slate-900">Use of service</h2>
               <p className="mt-1">
