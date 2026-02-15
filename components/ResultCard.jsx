@@ -12,12 +12,22 @@ import {
   Sparkles,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { trackEvent } from '@/lib/analytics';
 
 const DEFAULT_AVATAR = 'https://abs.twimg.com/sticky/default_profile_images/default_profile_normal.png';
 const compactNumber = new Intl.NumberFormat('en', {
   notation: 'compact',
   maximumFractionDigits: 1,
 });
+
+// DJB2 hash — fast string → number for cache keys.
+function simpleHash(str) {
+  let hash = 5381;
+  for (let i = 0; i < str.length; i++) {
+    hash = ((hash << 5) + hash + str.charCodeAt(i)) >>> 0;
+  }
+  return hash.toString(36);
+}
 
 function isValidAnalysisPayload(payload) {
   if (!payload || typeof payload !== 'object') return false;
@@ -75,9 +85,26 @@ export default function ResultCard({ tweet, similarity, badges, originalText }) 
       return;
     }
 
+    // ── Cache key: simple hash of the two texts ─────────────────────
+    const cacheKey = `tracex_ai_${simpleHash(originalText + '||' + tweet.content)}`;
+
+    // Check sessionStorage for a cached result first.
+    try {
+      const cached = sessionStorage.getItem(cacheKey);
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (isValidAnalysisPayload(parsed)) {
+          setAnalysis(parsed);
+          trackEvent('ai_analysis_cached', { similarity });
+          return;
+        }
+      }
+    } catch { /* ignore corrupt cache */ }
+
     setIsAnalyzing(true);
     setAnalysis(null);
     setError(null);
+    trackEvent('ai_analysis_requested', { similarity });
 
     try {
       const res = await fetch('/api/analyze', {
@@ -95,6 +122,13 @@ export default function ResultCard({ tweet, similarity, badges, originalText }) 
         throw new Error('AI returned an invalid analysis format. Please retry.');
       }
       setAnalysis(data);
+      trackEvent('ai_analysis_completed', {
+        verdict: data.verdict,
+        score: data.score,
+      });
+
+      // Persist to sessionStorage (fire-and-forget).
+      try { sessionStorage.setItem(cacheKey, JSON.stringify(data)); } catch { /* quota exceeded */ }
     } catch (err) {
       console.error(err);
       setError(err.message || 'Failed to analyze');

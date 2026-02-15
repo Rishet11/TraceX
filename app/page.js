@@ -4,6 +4,7 @@ import { useState, useMemo, useEffect, useRef } from 'react';
 import { ArrowDownUp, Filter, Share2, ShieldCheck } from 'lucide-react';
 import SearchInput from '@/components/SearchInput';
 import ResultCard from '@/components/ResultCard';
+import ErrorBoundary from '@/components/ErrorBoundary';
 import AppHeader from '@/components/AppHeader';
 import AppFooter from '@/components/AppFooter';
 import { calculateSimilarity } from '@/lib/similarity';
@@ -118,6 +119,10 @@ export default function Home() {
           data.error || data.details || 'We could not complete the search right now. Please retry.'
         );
         setSearchStatus('error');
+        trackEvent('search_failed', {
+          reason: data?.meta?.reason || 'api_error',
+          status: response.status,
+        });
         return;
       }
 
@@ -166,6 +171,7 @@ export default function Home() {
       setSelfDuplicates([]);
       setSearchErrorMessage('Network issue while searching. Please retry.');
       setSearchStatus('error');
+      trackEvent('search_failed', { reason: 'network_error' });
     } finally {
       setLoading(false);
     }
@@ -254,6 +260,10 @@ export default function Home() {
     }
     navigator.clipboard.writeText(url);
     setShareWarning('Share link copied to clipboard!');
+    trackEvent('share_created', {
+      resultCount: processedData.sorted.length,
+      urlLength: url.length,
+    });
   };
 
   const sourceSummary = useMemo(() => {
@@ -327,7 +337,13 @@ export default function Home() {
           </section>
 
           <section className="mt-4 md:mt-5">
-            <SearchInput onSearch={handleSearch} isLoading={loading} />
+            <ErrorBoundary
+              section="search_input"
+              fallbackTitle="Search unavailable"
+              fallbackMessage="The search input encountered an error. Click retry or refresh the page."
+            >
+              <SearchInput onSearch={handleSearch} isLoading={loading} />
+            </ErrorBoundary>
           </section>
 
           <div className="mt-3 text-center text-xs text-[var(--text-muted)]">
@@ -608,7 +624,7 @@ export default function Home() {
                       </div>
                     ) : (
                       <>
-                        {processedData.sorted.map((tweet, i) => {
+                         {processedData.sorted.map((tweet, i) => {
                           const badges = [];
                           if (tweet.similarityScore === 100) badges.push('💯 EXACT MATCH');
                           if (processedData.oldestTweetId && tweet.tweetId === processedData.oldestTweetId) {
@@ -619,13 +635,19 @@ export default function Home() {
                           }
 
                           return (
-                            <ResultCard
+                            <ErrorBoundary
                               key={tweet.tweetId || i}
-                              tweet={tweet}
-                              originalText={query}
-                              similarity={tweet.similarityScore}
-                              badges={badges}
-                            />
+                              section="result_card"
+                              fallbackTitle="Could not display this result"
+                              fallbackMessage="This result card encountered an error. Other results are unaffected."
+                            >
+                              <ResultCard
+                                tweet={tweet}
+                                originalText={query}
+                                similarity={tweet.similarityScore}
+                                badges={badges}
+                              />
+                            </ErrorBoundary>
                           );
                         })}
 
