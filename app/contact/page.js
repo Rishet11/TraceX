@@ -9,35 +9,34 @@ export default function ContactPage() {
       <main className="flex-1 section-block">
         <div className="container-main space-y-6">
           <section className="surface px-6 py-8 md:p-10 space-y-2">
-            <h1 className="display-xl text-slate-900">Contact support</h1>
+            <h1 className="display-xl text-[var(--text-title)]">Contact support</h1>
             <p className="text-helper max-w-2xl">
-              Questions about billing, product bugs, or feature requests? Reach us directly.
+              Questions about product issues or feature requests? Reach out directly.
             </p>
           </section>
 
           <section className="surface p-6 space-y-4">
             <div className="flex items-start gap-3">
-              <Mail className="text-slate-500 mt-0.5" size={18} />
+              <Mail className="text-[var(--text-muted)] mt-0.5" size={18} />
               <div>
-                <h2 className="text-lg font-bold text-slate-900">Email</h2>
-                <p className="text-sm text-slate-600 mt-1">
-                  For support and billing help, write to:
-                </p>
+                <h2 className="text-lg font-bold text-[var(--text-title)]">Email</h2>
+                <p className="text-sm text-[var(--text-body)] mt-1">Write to:</p>
                 <a
-                  href="mailto:support@yourdomain.com"
-                  className="text-slate-900 font-semibold hover:underline"
+                  href="mailto:rishetmehra11@gmail.com"
+                  className="text-[var(--text-title)] font-semibold hover:underline"
                 >
-                  support@yourdomain.com
+                  rishetmehra11@gmail.com
                 </a>
               </div>
             </div>
 
             <div className="flex items-start gap-3">
-              <MessageSquare className="text-slate-500 mt-0.5" size={18} />
+              <MessageSquare className="text-[var(--text-muted)] mt-0.5" size={18} />
               <div>
-                <h2 className="text-lg font-bold text-slate-900">What to include</h2>
-                <p className="text-sm text-slate-600 mt-1">
-                  Include your account email and a short description so we can resolve issues faster.
+                <h2 className="text-lg font-bold text-[var(--text-title)]">What to include</h2>
+                <p className="text-sm text-[var(--text-body)] mt-1">
+                  Share what happened and any relevant links/screenshots so issues can be resolved
+                  faster.
                 </p>
               </div>
             </div>
