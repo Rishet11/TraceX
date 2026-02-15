@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useMemo, useEffect, useRef } from 'react';
-import { ArrowDownUp, Filter, Share2, ShieldCheck, Search, Globe, Sparkles } from 'lucide-react';
+import { ArrowDownUp, ChevronDown, Filter, Share2, ShieldCheck, Search, Globe, Sparkles } from 'lucide-react';
 import SearchInput from '@/components/SearchInput';
 import ResultCard from '@/components/ResultCard';
 import ErrorBoundary from '@/components/ErrorBoundary';
@@ -17,6 +17,10 @@ const LOADING_STEPS = [
   { label: 'Checking sources', message: 'Scanning public indexes...', icon: Globe },
   { label: 'Ranking matches', message: 'Ranking matches by similarity...', icon: Sparkles },
 ];
+const compactNumber = new Intl.NumberFormat('en', {
+  notation: 'compact',
+  maximumFractionDigits: 1,
+});
 
 function parseMetricValue(value) {
   if (Number.isFinite(value)) return Number(value);
@@ -46,7 +50,7 @@ export default function Home() {
   const [similarityThreshold, setSimilarityThreshold] = useState(80);
   const [hideRetweets, setHideRetweets] = useState(false);
   const [sortBy, setSortBy] = useState('date');
-  const [showFiltersMobile, setShowFiltersMobile] = useState(false);
+  const [showFiltersMobile, setShowFiltersMobile] = useState(true);
   const [loadingStep, setLoadingStep] = useState(0);
   const [loadingElapsedSeconds, setLoadingElapsedSeconds] = useState(0);
   const trackedResultQueryRef = useRef('');
@@ -274,22 +278,6 @@ export default function Home() {
     });
   };
 
-  const sourceSummary = useMemo(() => {
-    if (!searchMeta?.sources) return '';
-    const available = [];
-    const nitter = searchMeta.sources.nitter;
-    const ddg = searchMeta.sources.duckduckgo;
-    const bing = searchMeta.sources.bing;
-    const jina = searchMeta.sources.jina;
-    if (nitter?.attempts > nitter?.failures) available.push('search mirrors');
-    if (ddg?.attempts > ddg?.failures) available.push('web discovery');
-    if (bing?.attempts > bing?.failures) available.push('news index');
-    if (jina?.attempts > jina?.failures) available.push('archive mirrors');
-    if (available.length === 0) return '';
-    return `Found via ${available.join(', ')}`;
-  }, [searchMeta]);
-
-  const showDebugPanel = process.env.NODE_ENV !== 'production' && searchMeta;
   const isDegradedSources = searchStatus === 'error' && searchMeta?.reason === 'all_sources_failed';
   const totalMatches = results.length;
   const visibleMatches = processedData.sorted.length;
@@ -307,7 +295,7 @@ export default function Home() {
     setSearchErrorMessage('');
     setSearchMeta(null);
     setShareWarning('');
-    setShowFiltersMobile(false);
+    setShowFiltersMobile(true);
   };
 
   const focusSearchInput = () => {
@@ -338,8 +326,8 @@ export default function Home() {
       <main className="flex-1 section-block">
         <div className="container-main">
           <section className="text-center space-y-4 pt-3 md:pt-6">
-            <div className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200/60 px-4 py-1.5 text-xs font-semibold text-blue-700 mb-1">
-              <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+            <div className="inline-flex items-center gap-2 rounded-full bg-[var(--surface-soft)] border border-[var(--line)] px-4 py-1.5 text-xs font-semibold text-[var(--brand-700)] mb-1">
+              <span className="w-2 h-2 rounded-full bg-[var(--success-600)] animate-pulse" />
               Free beta {totalSearches ? `— ${compactNumber.format(totalSearches)} tweets scanned` : '— no signup required'}
             </div>
             <h1 className="display-xl max-w-3xl mx-auto">
@@ -385,17 +373,29 @@ export default function Home() {
               </section>
 
               {/* Mock Result Preview */}
-              <section className="mt-7">
-                <h2 className="heading-lg text-center mb-1">See what you get</h2>
-                <p className="text-helper text-center mb-4">
-                  Each search returns result cards like this:
-                </p>
-                <div className="max-w-2xl mx-auto opacity-90 pointer-events-none select-none">
+              <section className="mt-7 surface p-5 md:p-6">
+                <div className="text-center mb-4">
+                  <span className="chip !bg-[var(--brand-50)] !text-[var(--brand-700)] !border-[var(--brand-100)]">
+                    Preview
+                  </span>
+                  <h2 className="heading-lg mt-2">How TraceX proves a match</h2>
+                  <p className="text-helper mt-1">
+                    Green highlights show matching text. Red highlights show what changed.
+                  </p>
+                </div>
+
+                <div className="flex flex-wrap justify-center gap-2 mb-4 text-xs">
+                  <span className="chip !bg-[var(--success-50)] !text-[var(--success-600)]">Match evidence</span>
+                  <span className="chip !bg-[var(--danger-50)] !text-[var(--danger-600)]">Changed wording</span>
+                  <span className="chip">Engagement + source link</span>
+                </div>
+
+                <div className="max-w-3xl mx-auto opacity-95 pointer-events-none select-none">
                   <ResultCard
                     tweet={{
                       author: {
-                        fullname: 'John Doe',
-                        username: 'john_doe',
+                        fullname: 'Aarav Mehta',
+                        username: 'aarav_mehta',
                         avatar: 'https://abs.twimg.com/sticky/default_profile_images/default_profile_normal.png',
                       },
                       content: 'Just finished shipping v2 after 3 failed launches. Keep building.\n— The grind never stops 💪',
@@ -409,7 +409,6 @@ export default function Home() {
                     badges={['🔥 VIRAL']}
                   />
                 </div>
-
               </section>
 
               {/* Features */}
@@ -444,13 +443,13 @@ export default function Home() {
                 <div className="space-y-4">
                   <div className="surface p-5 md:p-6 flex flex-col items-center justify-center py-8 space-y-4">
                       <div className="relative">
-                        <div className="w-16 h-16 rounded-full bg-blue-50 flex items-center justify-center text-blue-600 animate-bounce">
+                        <div className="w-16 h-16 rounded-full bg-[var(--brand-50)] border border-[var(--brand-100)] flex items-center justify-center text-[var(--brand-700)] animate-bounce">
                            {(() => {
                              const Icon = LOADING_STEPS[loadingStep].icon;
                              return <Icon size={32} />;
                            })()}
                         </div>
-                        <div className="absolute -bottom-2 w-12 h-1 bg-blue-200/50 rounded-full blur-sm mx-auto left-0 right-0 animate-pulse" />
+                        <div className="absolute -bottom-2 w-12 h-1 bg-[var(--brand-300)]/50 rounded-full blur-sm mx-auto left-0 right-0 animate-pulse" />
                       </div>
                       
                       <div className="text-center space-y-1.5 max-w-xs mx-auto">
@@ -461,7 +460,7 @@ export default function Home() {
                           {[0, 1, 2].map((i) => (
                             <div 
                               key={i} 
-                              className={`w-2 h-2 rounded-full transition-colors duration-300 ${i === loadingStep ? 'bg-blue-600' : i < loadingStep ? 'bg-green-500' : 'bg-slate-200'}`}
+                              className={`w-2 h-2 rounded-full transition-colors duration-300 ${i === loadingStep ? 'bg-[var(--brand-600)]' : i < loadingStep ? 'bg-[var(--success-600)]' : 'bg-[var(--line)]'}`}
                             />
                           ))}
                         </div>
@@ -479,18 +478,18 @@ export default function Home() {
                       <div key={item} className="surface p-5 animate-pulse">
                         <div className="flex items-center justify-between mb-4">
                           <div className="flex items-center gap-3">
-                            <div className="w-12 h-12 rounded-full bg-slate-200" />
+                            <div className="w-12 h-12 rounded-full bg-[var(--surface-soft)] border border-[var(--line)]" />
                             <div className="space-y-2">
-                              <div className="h-4 w-32 bg-slate-200 rounded" />
-                              <div className="h-3 w-24 bg-slate-100 rounded" />
+                              <div className="h-4 w-32 bg-[var(--surface-soft)] rounded" />
+                              <div className="h-3 w-24 bg-[var(--line)] rounded" />
                             </div>
                           </div>
-                          <div className="h-8 w-24 bg-slate-100 rounded-full" />
+                          <div className="h-8 w-24 bg-[var(--line)] rounded-full" />
                         </div>
                         <div className="space-y-2">
-                          <div className="h-4 w-full bg-slate-100 rounded" />
-                          <div className="h-4 w-11/12 bg-slate-100 rounded" />
-                          <div className="h-4 w-9/12 bg-slate-100 rounded" />
+                          <div className="h-4 w-full bg-[var(--line)] rounded" />
+                          <div className="h-4 w-11/12 bg-[var(--line)] rounded" />
+                          <div className="h-4 w-9/12 bg-[var(--line)] rounded" />
                         </div>
                       </div>
                     ))}
@@ -511,19 +510,18 @@ export default function Home() {
                         <span className="chip">{visibleMatches} visible</span>
                         <span className="chip">{totalMatches} total</span>
                       </div>
-                      {sourceSummary && <div className="text-caption">{sourceSummary}</div>}
                     </div>
 
                     <div className="flex flex-col xl:flex-row xl:items-center xl:justify-between gap-3">
                       <button
                         type="button"
                         onClick={() => setShowFiltersMobile((prev) => !prev)}
-                        className="btn btn-secondary inline-flex md:hidden px-3 py-2"
+                        className="btn btn-secondary inline-flex px-3 py-2"
                       >
                         {showFiltersMobile ? 'Hide filters' : 'Show filters'}
                       </button>
 
-                      <div className={`${showFiltersMobile ? 'grid' : 'hidden'} md:grid grid-cols-1 sm:grid-cols-2 xl:flex gap-2.5 md:gap-3 w-full xl:w-auto`}>
+                      <div className={`${showFiltersMobile ? 'grid' : 'hidden'} grid-cols-1 sm:grid-cols-2 xl:flex gap-2.5 md:gap-3 w-full xl:w-auto`}>
                         <div className="surface-soft px-3 py-2 flex items-center gap-2">
                           <Filter size={17} className="text-[var(--text-muted)]" />
                           <span className="text-sm font-medium text-[var(--text-body)] whitespace-nowrap">
@@ -546,7 +544,7 @@ export default function Home() {
                               type="checkbox"
                               checked={hideRetweets}
                               onChange={(e) => setHideRetweets(e.target.checked)}
-                              className="rounded text-blue-600 focus:ring-blue-500"
+                              className="rounded text-[var(--brand-600)] focus:ring-[var(--brand-500)]"
                             />
                             Hide retweets & quotes
                           </label>
@@ -554,17 +552,23 @@ export default function Home() {
 
                         <div className="surface-soft px-3 py-2 flex items-center gap-2">
                           <ArrowDownUp size={16} className="text-[var(--text-muted)]" />
-                          <select
-                            value={sortBy}
-                            onChange={(e) => setSortBy(e.target.value)}
-                            className="text-sm border-gray-300 rounded-md focus:border-blue-500 focus:ring-blue-500 bg-white py-1"
-                            aria-label="Sort results"
-                          >
-                            <option value="date">Newest First</option>
-                            <option value="oldest">Oldest First</option>
-                            <option value="similarity">Highest Match</option>
-                            <option value="engagement">Most Viral</option>
-                          </select>
+                          <div className="relative">
+                            <select
+                              value={sortBy}
+                              onChange={(e) => setSortBy(e.target.value)}
+                              className="appearance-none text-sm border border-[var(--line)] rounded-md focus:border-[var(--brand-500)] focus:outline-none bg-[var(--surface)] text-[var(--text-body)] py-1 pl-2.5 pr-8"
+                              aria-label="Sort results"
+                            >
+                              <option value="date">Newest First</option>
+                              <option value="oldest">Oldest First</option>
+                              <option value="similarity">Highest Match</option>
+                              <option value="engagement">Most Viral</option>
+                            </select>
+                            <ChevronDown
+                              size={15}
+                              className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-[var(--text-muted)]"
+                            />
+                          </div>
                         </div>
                       </div>
 
@@ -580,7 +584,7 @@ export default function Home() {
 
                     {shareWarning && (
                       <div
-                        className={`text-xs rounded-[var(--radius-sm)] px-3 py-2 border ${isShareSuccess ? 'text-green-700 bg-green-50 border-green-200' : 'text-red-700 bg-red-50 border-red-200'}`}
+                        className={`text-xs rounded-[var(--radius-sm)] px-3 py-2 ${isShareSuccess ? 'status-success' : 'status-danger'}`}
                       >
                         {shareWarning}
                       </div>
@@ -601,7 +605,7 @@ export default function Home() {
                           {selfDuplicates.slice(0, 4).map((tweet, idx) => (
                             <div
                               key={tweet.tweetId || tweet.url || idx}
-                              className="flex items-center justify-between gap-3 rounded-[var(--radius-sm)] border border-[var(--line)] bg-white px-3 py-2"
+                              className="flex items-center justify-between gap-3 rounded-[var(--radius-sm)] border border-[var(--line)] bg-[var(--surface)] px-3 py-2"
                             >
                               <div className="min-w-0">
                                 <p className="text-xs text-[var(--text-title)] truncate">
@@ -624,23 +628,6 @@ export default function Home() {
                         </div>
                       </div>
                     )}
-                    {showDebugPanel && (
-                      <div className="text-xs bg-slate-50 border border-slate-200 text-slate-600 rounded-[var(--radius-sm)] p-3">
-                        <div className="font-semibold text-slate-700 mb-1">Debug diagnostics</div>
-                        <div>Reason: {searchMeta.reason}</div>
-                        <div>
-                          Sources: Nitter {searchMeta?.sources?.nitter?.attempts || 0}/
-                          {searchMeta?.sources?.nitter?.failures || 0} fail, DDG{' '}
-                          {searchMeta?.sources?.duckduckgo?.attempts || 0}/
-                          {searchMeta?.sources?.duckduckgo?.failures || 0} fail, Bing{' '}
-                          {searchMeta?.sources?.bing?.attempts || 0}/
-                          {searchMeta?.sources?.bing?.failures || 0} fail, Jina{' '}
-                          {searchMeta?.sources?.jina?.attempts || 0}/
-                          {searchMeta?.sources?.jina?.failures || 0} fail
-                        </div>
-                      </div>
-                    )}
-
                     {processedData.sorted.length === 0 ? (
                       <div className="surface text-center py-10 text-[var(--text-muted)]">
                         <p>No results match your filters.</p>
@@ -694,7 +681,7 @@ export default function Home() {
 
               {searchStatus === 'success' && results.length === 0 && (
                 <div className="surface p-5 md:p-7 text-center space-y-4">
-                  <div className="mx-auto w-12 h-12 flex items-center justify-center rounded-full bg-green-50 text-green-600 border border-green-100">
+                  <div className="mx-auto w-12 h-12 flex items-center justify-center rounded-full status-success">
                     <ShieldCheck size={22} />
                   </div>
 
@@ -710,7 +697,9 @@ export default function Home() {
                   </div>
 
                   <div className="flex flex-wrap items-center justify-center gap-2 text-xs">
-                    <span className="chip !bg-green-50 !text-green-700 !border-green-200">0 external copies</span>
+                    <span className="chip status-success">
+                      0 external copies
+                    </span>
                     {selfDuplicates.length > 0 && (
                       <span className="chip">{selfDuplicates.length} same-author repeats</span>
                     )}
@@ -725,7 +714,7 @@ export default function Home() {
                         {selfDuplicates.slice(0, 4).map((tweet, idx) => (
                           <div
                             key={tweet.tweetId || tweet.url || idx}
-                            className="flex items-center justify-between gap-3 rounded-[var(--radius-sm)] border border-[var(--line)] bg-white px-3 py-2"
+                            className="flex items-center justify-between gap-3 rounded-[var(--radius-sm)] border border-[var(--line)] bg-[var(--surface)] px-3 py-2"
                           >
                             <div className="min-w-0">
                               <p className="text-xs text-[var(--text-title)] truncate">
@@ -782,7 +771,7 @@ export default function Home() {
 
               {searchStatus === 'error' && (
                 <div className="surface p-5 md:p-6 text-center space-y-3.5">
-                  <div className="text-amber-700 mx-auto w-12 h-12 flex items-center justify-center bg-amber-50 rounded-full text-2xl">
+                  <div className="mx-auto w-12 h-12 flex items-center justify-center status-warning rounded-full text-2xl">
                     😕
                   </div>
                   <h3 className="text-xl font-semibold text-[var(--text-title)]">Search is busy right now</h3>

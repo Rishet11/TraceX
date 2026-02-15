@@ -61,21 +61,28 @@ export default function ResultCard({ tweet, similarity, badges, originalText }) 
   const stats = tweet?.stats || {};
   const similarityColor =
     similarity >= 90
-      ? 'text-green-700 bg-green-50 border-green-200'
-      : similarity >= 70
-        ? 'text-amber-700 bg-amber-50 border-amber-200'
-        : 'text-slate-700 bg-slate-50 border-slate-200';
+        ? 'status-success'
+        : similarity >= 70
+          ? 'status-warning'
+        : 'text-[var(--text-body)] bg-[var(--surface-soft)] border-[var(--line)]';
 
-  const formatMetric = (value) => {
-    if (Number.isFinite(value)) return compactNumber.format(value);
+  const formatMetric = (value, options = {}) => {
+    const { fallback = '0', zeroAsMissing = false } = options;
+    if (Number.isFinite(value)) {
+      if (zeroAsMissing && Number(value) === 0) return fallback;
+      return compactNumber.format(value);
+    }
     const raw = String(value ?? '').trim();
-    if (!raw) return '0';
+    if (!raw) return fallback;
     if (/^\d+(\.\d+)?\s*[KMB]$/i.test(raw)) {
       return raw.replace(/\s+/g, '').toUpperCase();
     }
     const numeric = Number(raw.replace(/,/g, ''));
-    if (Number.isFinite(numeric)) return compactNumber.format(numeric);
-    return '0';
+    if (Number.isFinite(numeric)) {
+      if (zeroAsMissing && numeric === 0) return fallback;
+      return compactNumber.format(numeric);
+    }
+    return fallback;
   };
 
   const source = sourceLabel(tweet?.source);
@@ -148,7 +155,7 @@ export default function ResultCard({ tweet, similarity, badges, originalText }) 
               alt={tweet?.author?.username || 'avatar'}
               width={52}
               height={52}
-              className="w-12 h-12 md:w-13 md:h-13 rounded-full bg-slate-50 object-cover border border-slate-200"
+              className="w-12 h-12 md:w-13 md:h-13 rounded-full bg-[var(--surface-soft)] object-cover border border-[var(--line)]"
               unoptimized
               loader={({ src }) => src}
               onError={() => setAvatarSrc(DEFAULT_AVATAR)}
@@ -184,11 +191,7 @@ export default function ResultCard({ tweet, similarity, badges, originalText }) 
           diffText(originalText, tweet.content).map((part, i) => (
              <span
               key={i}
-              className={
-                part.type === 'match'
-                  ? 'bg-green-100 text-green-900 dark:bg-green-900/30 dark:text-green-100 rounded-[2px] px-0.5 box-decoration-clone'
-                  : 'bg-red-50 text-red-900 dark:bg-red-900/20 dark:text-red-100 rounded-[2px] px-0.5 box-decoration-clone'
-              }
+              className={part.type === 'match' ? 'diff-match' : 'diff-change'}
              >
                 {part.value}
              </span>
@@ -211,7 +214,7 @@ export default function ResultCard({ tweet, similarity, badges, originalText }) 
         </div>
       )}
 
-      <div className="pt-3 border-t border-slate-100 space-y-3">
+      <div className="pt-3 border-t border-[var(--line)] space-y-3">
         <div className="flex flex-wrap gap-x-4 gap-y-2 text-[var(--text-muted)] text-sm">
           <span className="flex items-center gap-1.5" title="Replies">
             <MessageCircle size={17} />
@@ -237,15 +240,14 @@ export default function ResultCard({ tweet, similarity, badges, originalText }) 
 
         <div className="flex flex-wrap items-center gap-2 sm:gap-3">
           {!analysis && !isAnalyzing && (
-            <div className="flex flex-col gap-1">
+            <div>
               <button
                 onClick={handleAnalyze}
-                className="btn btn-ghost px-3 py-1.5 text-xs border border-transparent hover:border-violet-100 hover:bg-violet-50 hover:text-violet-800 w-fit"
+                className="ai-cta w-fit whitespace-nowrap"
                 disabled={isAnalyzing}
               >
                 <Sparkles size={14} /> Analyze with AI
               </button>
-              <p className="text-[11px] text-[var(--text-muted)]">See if this looks like likely idea theft.</p>
             </div>
           )}
 
@@ -271,7 +273,7 @@ export default function ResultCard({ tweet, similarity, badges, originalText }) 
       )}
 
       {error && (
-        <div className="mt-5 p-3 bg-[var(--danger-50)] text-[var(--danger-600)] rounded-[var(--radius-sm)] text-sm border border-red-100 flex items-center gap-2">
+        <div className="mt-5 p-3 status-danger rounded-[var(--radius-sm)] text-sm flex items-center gap-2">
           <AlertCircle size={16} /> {error}
         </div>
       )}
@@ -283,7 +285,7 @@ export default function ResultCard({ tweet, similarity, badges, originalText }) 
               <Sparkles size={16} className="text-violet-600" />
               AI Verdict: {analysis.verdict}
             </h4>
-            <span className="bg-white text-violet-700 px-2 py-1 rounded-md text-xs font-bold border border-violet-100">
+            <span className="bg-[var(--surface)] text-violet-700 px-2 py-1 rounded-md text-xs font-bold border border-violet-100">
               {analysis.score}/100 Confidence
             </span>
           </div>
