@@ -329,14 +329,21 @@ export default function Home() {
 
       <main className="flex-1 section-block">
         <div className="container-main">
-          <section className="text-center space-y-3">
-            <h1 className="display-xl max-w-3xl mx-auto">Find who copied your tweet</h1>
-            <p className="text-ui max-w-2xl mx-auto">
-              Paste a tweet URL or text and get proof in about 30 seconds.
+          <section className="text-center space-y-4 pt-3 md:pt-6">
+            <div className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200/60 px-4 py-1.5 text-xs font-semibold text-blue-700 mb-1">
+              <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+              Free beta — no signup required
+            </div>
+            <h1 className="display-xl max-w-3xl mx-auto">
+              Find who copied your tweet
+            </h1>
+            <p className="text-ui max-w-xl mx-auto text-[var(--text-muted)]">
+              Paste a tweet URL or text and get proof in about 30&nbsp;seconds.
+              TraceX scans multiple public sources and scores each match.
             </p>
           </section>
 
-          <section className="mt-4 md:mt-5">
+          <section className="mt-5 md:mt-6">
             <ErrorBoundary
               section="search_input"
               fallbackTitle="Search unavailable"
@@ -346,60 +353,84 @@ export default function Home() {
             </ErrorBoundary>
           </section>
 
-          <div className="mt-3 text-center text-xs text-[var(--text-muted)]">
-            No signup required. Public tweets only. Start free.
+          <div className="mt-2.5 text-center text-xs text-[var(--text-faint)]">
+            Public tweets only · Results in ~15 seconds · 100% free
           </div>
 
           {searchStatus === 'idle' && (
             <>
-              <section className="mt-5 grid gap-2.5 md:grid-cols-3">
-                <div className="surface-soft p-3.5 flex items-center gap-2.5">
-                  <span className="chip shrink-0">1</span>
-                  <p className="text-sm text-[var(--text-body)]">Paste tweet URL or text</p>
-                </div>
-                <div className="surface-soft p-3.5 flex items-center gap-2.5">
-                  <span className="chip shrink-0">2</span>
-                  <p className="text-sm text-[var(--text-body)]">TraceX scans multiple public sources</p>
-                </div>
-                <div className="surface-soft p-3.5 flex items-center gap-2.5">
-                  <span className="chip shrink-0">3</span>
-                  <p className="text-sm text-[var(--text-body)]">Review matches and share results</p>
+              {/* How It Works */}
+              <section className="mt-7 grid gap-3 md:grid-cols-3">
+                {[
+                  { step: '1', icon: '📋', title: 'Paste', desc: 'Tweet URL or text' },
+                  { step: '2', icon: '🔍', title: 'Scan', desc: 'Multiple public sources checked' },
+                  { step: '3', icon: '📊', title: 'Review', desc: 'Matches scored and ranked' },
+                ].map((item) => (
+                  <div key={item.step} className="surface-soft surface-hover p-4 flex items-center gap-3">
+                    <span className="text-2xl shrink-0">{item.icon}</span>
+                    <div>
+                      <p className="text-sm font-semibold text-[var(--text-title)]">{item.title}</p>
+                      <p className="text-xs text-[var(--text-muted)]">{item.desc}</p>
+                    </div>
+                  </div>
+                ))}
+              </section>
+
+              {/* Mock Result Preview */}
+              <section className="mt-7">
+                <h2 className="heading-lg text-center mb-1">See what you get</h2>
+                <p className="text-helper text-center mb-4">
+                  Each search returns result cards like this:
+                </p>
+                <div className="surface p-4 md:p-5 max-w-2xl mx-auto opacity-90 pointer-events-none select-none">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-100 to-blue-200 flex items-center justify-center text-sm font-bold text-blue-700">
+                        JD
+                      </div>
+                      <div>
+                        <p className="text-sm font-semibold text-[var(--text-title)]">@john_doe</p>
+                        <p className="text-[11px] text-[var(--text-muted)]">2 hours ago · via DuckDuckGo</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-1.5 bg-red-50 border border-red-200 text-red-700 rounded-full px-3 py-1 text-xs font-bold">
+                      <span>🔴</span> 94% match
+                    </div>
+                  </div>
+                  <p className="text-sm text-[var(--text-body)] leading-relaxed mb-3">
+                    Just finished shipping v2 after 3 failed launches. Keep building.
+                    <span className="text-[var(--text-faint)]"> — The grind never stops 💪</span>
+                  </p>
+                  <div className="flex items-center gap-4 text-xs text-[var(--text-muted)]">
+                    <span>💬 24</span>
+                    <span>🔁 182</span>
+                    <span>❤️ 1.2K</span>
+                    <span>👀 48K</span>
+                  </div>
                 </div>
               </section>
 
-              <section className="mt-7 surface p-5 md:p-6 space-y-3.5">
-                <div>
-                  <h2 className="heading-lg">What you get after each search</h2>
-                  <p className="text-helper mt-1">
-                    Clear results with confidence scores and direct source context.
-                  </p>
-                </div>
-
+              {/* Features */}
+              <section className="mt-7 surface p-5 md:p-6">
+                <h2 className="heading-lg mb-1">What you get after each search</h2>
+                <p className="text-helper mb-4">
+                  Clear results with confidence scores and direct source context.
+                </p>
                 <div className="grid gap-3 sm:grid-cols-2">
-                  <div className="surface-soft p-4">
-                    <p className="text-sm font-medium text-[var(--text-body)] flex items-start gap-2">
-                      <span className="text-[var(--success-600)] mt-0.5">✓</span>
-                      Match confidence score (0-100)
-                    </p>
-                  </div>
-                  <div className="surface-soft p-4">
-                    <p className="text-sm font-medium text-[var(--text-body)] flex items-start gap-2">
-                      <span className="text-[var(--success-600)] mt-0.5">✓</span>
-                      External copies vs same-author repeats
-                    </p>
-                  </div>
-                  <div className="surface-soft p-4">
-                    <p className="text-sm font-medium text-[var(--text-body)] flex items-start gap-2">
-                      <span className="text-[var(--success-600)] mt-0.5">✓</span>
-                      Replies, reposts, likes, views, and bookmarks
-                    </p>
-                  </div>
-                  <div className="surface-soft p-4">
-                    <p className="text-sm font-medium text-[var(--text-body)] flex items-start gap-2">
-                      <span className="text-[var(--success-600)] mt-0.5">✓</span>
-                      Open tweet source + shareable result link
-                    </p>
-                  </div>
+                  {[
+                    { icon: '🎯', title: 'Match confidence score (0–100)', desc: 'Fuzzy text similarity powered by multiple algorithms' },
+                    { icon: '👤', title: 'External copies vs same-author repeats', desc: 'Automatically separated so you see real copies first' },
+                    { icon: '📈', title: 'Full engagement metrics', desc: 'Replies, reposts, likes, views, and bookmarks' },
+                    { icon: '🔗', title: 'Source links + shareable results', desc: 'Open the tweet or share your results with one click' },
+                  ].map((f) => (
+                    <div key={f.title} className="surface-soft p-4 flex gap-3">
+                      <span className="text-xl shrink-0 mt-0.5">{f.icon}</span>
+                      <div>
+                        <p className="text-sm font-semibold text-[var(--text-body)]">{f.title}</p>
+                        <p className="text-xs text-[var(--text-muted)] mt-0.5">{f.desc}</p>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </section>
             </>
