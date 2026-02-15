@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { trackEvent } from '@/lib/analytics';
+import { diffText } from '@/lib/diff';
 
 const DEFAULT_AVATAR = 'https://abs.twimg.com/sticky/default_profile_images/default_profile_normal.png';
 const compactNumber = new Intl.NumberFormat('en', {
@@ -179,7 +180,22 @@ export default function ResultCard({ tweet, similarity, badges, originalText }) 
       </header>
 
       <p className="text-[var(--text-body)] text-[15px] md:text-base mb-4 whitespace-pre-wrap break-words leading-[1.58]">
-        {tweet?.content || ''}
+        {originalText ? (
+          diffText(originalText, tweet.content).map((part, i) => (
+             <span
+              key={i}
+              className={
+                part.type === 'match'
+                  ? 'bg-green-100 text-green-900 dark:bg-green-900/30 dark:text-green-100 rounded-[2px] px-0.5 box-decoration-clone'
+                  : 'bg-red-50 text-red-900 dark:bg-red-900/20 dark:text-red-100 rounded-[2px] px-0.5 box-decoration-clone'
+              }
+             >
+                {part.value}
+             </span>
+          ))
+        ) : (
+          tweet?.content || ''
+        )}
       </p>
 
       {badges && badges.length > 0 && (

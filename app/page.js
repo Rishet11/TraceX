@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useMemo, useEffect, useRef } from 'react';
-import { ArrowDownUp, Filter, Share2, ShieldCheck } from 'lucide-react';
+import { ArrowDownUp, Filter, Share2, ShieldCheck, Search, Globe, Sparkles } from 'lucide-react';
 import SearchInput from '@/components/SearchInput';
 import ResultCard from '@/components/ResultCard';
 import ErrorBoundary from '@/components/ErrorBoundary';
@@ -13,9 +13,9 @@ import { encodeShareData } from '@/lib/urlEncoder';
 import { trackEvent } from '@/lib/analytics';
 
 const LOADING_STEPS = [
-  { label: 'Preparing query', message: 'Searching public posts...' },
-  { label: 'Checking sources', message: 'Checking multiple sources...' },
-  { label: 'Ranking matches', message: 'Scoring likely matches...' },
+  { label: 'Preparing query', message: 'Connecting to search network...', icon: Search },
+  { label: 'Checking sources', message: 'Scanning public indexes...', icon: Globe },
+  { label: 'Ranking matches', message: 'Ranking matches by similarity...', icon: Sparkles },
 ];
 
 function parseMetricValue(value) {
@@ -50,9 +50,17 @@ export default function Home() {
   const [loadingStep, setLoadingStep] = useState(0);
   const [loadingElapsedSeconds, setLoadingElapsedSeconds] = useState(0);
   const trackedResultQueryRef = useRef('');
+  const [totalSearches, setTotalSearches] = useState(null);
 
   useEffect(() => {
     trackEvent('landing_viewed', { page: 'home' });
+    // Fetch total searches for social proof
+    fetch('/api/stats')
+      .then(res => res.json())
+      .then(data => {
+        if (data.totalSearches > 0) setTotalSearches(data.totalSearches);
+      })
+      .catch(() => {}); // silent fail
   }, []);
 
   useEffect(() => {
@@ -332,7 +340,7 @@ export default function Home() {
           <section className="text-center space-y-4 pt-3 md:pt-6">
             <div className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200/60 px-4 py-1.5 text-xs font-semibold text-blue-700 mb-1">
               <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-              Free beta — no signup required
+              Free beta {totalSearches ? `— ${compactNumber.format(totalSearches)} tweets scanned` : '— no signup required'}
             </div>
             <h1 className="display-xl max-w-3xl mx-auto">
               Find who copied your tweet
@@ -382,32 +390,26 @@ export default function Home() {
                 <p className="text-helper text-center mb-4">
                   Each search returns result cards like this:
                 </p>
-                <div className="surface p-4 md:p-5 max-w-2xl mx-auto opacity-90 pointer-events-none select-none">
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-100 to-blue-200 flex items-center justify-center text-sm font-bold text-blue-700">
-                        JD
-                      </div>
-                      <div>
-                        <p className="text-sm font-semibold text-[var(--text-title)]">@john_doe</p>
-                        <p className="text-[11px] text-[var(--text-muted)]">2 hours ago · via DuckDuckGo</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-1.5 bg-red-50 border border-red-200 text-red-700 rounded-full px-3 py-1 text-xs font-bold">
-                      <span>🔴</span> 94% match
-                    </div>
-                  </div>
-                  <p className="text-sm text-[var(--text-body)] leading-relaxed mb-3">
-                    Just finished shipping v2 after 3 failed launches. Keep building.
-                    <span className="text-[var(--text-faint)]"> — The grind never stops 💪</span>
-                  </p>
-                  <div className="flex items-center gap-4 text-xs text-[var(--text-muted)]">
-                    <span>💬 24</span>
-                    <span>🔁 182</span>
-                    <span>❤️ 1.2K</span>
-                    <span>👀 48K</span>
-                  </div>
+                <div className="max-w-2xl mx-auto opacity-90 pointer-events-none select-none">
+                  <ResultCard
+                    tweet={{
+                      author: {
+                        fullname: 'John Doe',
+                        username: 'john_doe',
+                        avatar: 'https://abs.twimg.com/sticky/default_profile_images/default_profile_normal.png',
+                      },
+                      content: 'Just finished shipping v2 after 3 failed launches. Keep building.\n— The grind never stops 💪',
+                      stats: { replies: 24, retweets: 182, likes: '1.2K', views: '48K', bookmarks: 12 },
+                      relativeDate: '2 hours ago',
+                      source: 'duckduckgo',
+                      url: '#',
+                    }}
+                    originalText="Just finished shipping v2 after 3 failed launches. Keep building."
+                    similarity={94}
+                    badges={['🔥 VIRAL']}
+                  />
                 </div>
+
               </section>
 
               {/* Features */}
@@ -440,37 +442,33 @@ export default function Home() {
             <section className="space-y-4 mt-7">
               {searchStatus === 'loading' && (
                 <div className="space-y-4">
-                  <div className="surface p-5 md:p-6 space-y-3.5">
-                    <div className="text-center space-y-1.5">
-                      <p className="text-[var(--text-title)] font-semibold">
-                        {LOADING_STEPS[loadingStep].message}
-                      </p>
-                      <p className="text-helper">Usually takes 5–15 seconds.</p>
-                    </div>
-
-                    <div className="h-2 rounded-full bg-slate-100 overflow-hidden">
-                      <div className="h-full w-2/5 rounded-full bg-gradient-to-r from-[var(--brand-400)] via-[var(--brand-600)] to-[var(--brand-400)] animate-pulse" />
-                    </div>
-
-                    <div className="grid gap-2 sm:grid-cols-3 text-xs">
-                      {LOADING_STEPS.map((step, idx) => {
-                        const isActive = idx === loadingStep;
-                        const isDone = idx < loadingStep;
-                        const indicator = isDone ? '✓' : isActive ? '●' : '○';
-                        return (
-                          <div
-                            key={step.label}
-                            className={`rounded-[var(--radius-sm)] px-2.5 py-2 border text-center ${isActive ? 'bg-[var(--brand-50)] border-[var(--brand-200)] text-[var(--brand-700)]' : isDone ? 'bg-green-50 border-green-200 text-green-700' : 'bg-white border-[var(--line)] text-[var(--text-muted)]'}`}
-                          >
-                            <span className="mr-1">{indicator}</span>
-                            {step.label}
-                          </div>
-                        );
-                      })}
-                    </div>
+                  <div className="surface p-5 md:p-6 flex flex-col items-center justify-center py-8 space-y-4">
+                      <div className="relative">
+                        <div className="w-16 h-16 rounded-full bg-blue-50 flex items-center justify-center text-blue-600 animate-bounce">
+                           {(() => {
+                             const Icon = LOADING_STEPS[loadingStep].icon;
+                             return <Icon size={32} />;
+                           })()}
+                        </div>
+                        <div className="absolute -bottom-2 w-12 h-1 bg-blue-200/50 rounded-full blur-sm mx-auto left-0 right-0 animate-pulse" />
+                      </div>
+                      
+                      <div className="text-center space-y-1.5 max-w-xs mx-auto">
+                        <p className="text-[var(--text-title)] font-medium text-lg animate-pulse">
+                          {LOADING_STEPS[loadingStep].message}
+                        </p>
+                        <div className="flex justify-center gap-1.5">
+                          {[0, 1, 2].map((i) => (
+                            <div 
+                              key={i} 
+                              className={`w-2 h-2 rounded-full transition-colors duration-300 ${i === loadingStep ? 'bg-blue-600' : i < loadingStep ? 'bg-green-500' : 'bg-slate-200'}`}
+                            />
+                          ))}
+                        </div>
+                      </div>
 
                     {showSlowSearchHint && (
-                      <p className="text-xs text-[var(--text-muted)] text-center">
+                      <p className="text-xs text-[var(--text-muted)] text-center mt-4">
                         Still searching. Some sources are slower right now.
                       </p>
                     )}
