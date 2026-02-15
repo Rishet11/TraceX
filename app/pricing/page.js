@@ -49,7 +49,7 @@ export default function PricingPage() {
             <ul className="space-y-2.5 text-sm text-[var(--text-body)]">
               {liveFeatures.map((feature) => (
                 <li key={feature} className="flex items-start gap-2">
-                  <Check size={16} className="mt-0.5 text-green-600 shrink-0" />
+                  <Check size={16} className="mt-0.5 text-[var(--success-600)] shrink-0" />
                   {feature}
                 </li>
               ))}

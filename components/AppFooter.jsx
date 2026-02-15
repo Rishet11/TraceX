@@ -2,7 +2,7 @@ import Link from 'next/link';
 
 export default function AppFooter() {
   return (
-    <footer className="border-t border-[var(--line)] bg-white mt-10 md:mt-14">
+    <footer className="border-t border-[var(--line)] bg-[var(--surface)] mt-10 md:mt-14">
       <div className="container-main py-9 md:py-11">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
           <p className="text-sm text-[var(--text-muted)] max-w-lg leading-relaxed">

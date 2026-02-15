@@ -103,7 +103,7 @@ export default function SearchInput({ onSearch, isLoading, prefillText = '' }) {
                   key={sample}
                   type="button"
                   onClick={() => applySample(sample)}
-                  className="px-2.5 py-1.5 text-[11px] rounded-full border border-[var(--line)] bg-white text-[var(--text-body)] hover:border-[var(--brand-300)] hover:bg-[var(--brand-50)] transition-colors"
+                  className="px-2.5 py-1.5 text-[11px] rounded-full border border-[var(--line)] bg-[var(--surface)] text-[var(--text-body)] hover:border-[var(--brand-300)] hover:bg-[var(--brand-50)] transition-colors"
                 >
                   {sample.length > 36 ? `${sample.slice(0, 36)}...` : sample}
                 </button>
@@ -133,7 +133,7 @@ export default function SearchInput({ onSearch, isLoading, prefillText = '' }) {
             className={cn(
               'btn btn-primary w-full sm:w-[240px] h-12 px-6 text-[15px]',
               isLoading || isFetchingUrl
-                ? 'bg-[#93C5FD] border-[#93C5FD] shadow-none'
+                ? 'bg-[var(--brand-300)] border-[var(--brand-300)] shadow-none'
                 : ''
             )}
           >
@@ -153,7 +153,7 @@ export default function SearchInput({ onSearch, isLoading, prefillText = '' }) {
       </form>
 
       {error && (
-        <div className="mt-3 p-3 bg-[var(--danger-50)] text-[var(--danger-600)] rounded-[var(--radius-sm)] border border-red-100 flex items-start gap-2">
+        <div className="mt-3 p-3 status-danger rounded-[var(--radius-sm)] flex items-start gap-2">
           <AlertCircle size={16} className="mt-0.5 shrink-0" />
           <p className="text-sm font-medium">{error}</p>
         </div>
