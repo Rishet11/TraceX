@@ -4,7 +4,9 @@ import { kvIncr } from '@/lib/kv';
 
 export const POST = withApiLogging('search', async (payload) => {
   const result = await runSearchPipeline(payload);
-  // Increment total search counter (fire-and-forget)
-  kvIncr('total_searches').catch(err => console.error('Failed to increment search counter:', err));
+  // Increment social-proof counter only for successful searches.
+  if (result?.status === 200) {
+    kvIncr('total_searches').catch(err => console.error('Failed to increment search counter:', err));
+  }
   return result;
 });

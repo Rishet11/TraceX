@@ -34,47 +34,61 @@ function cleanupStaleEntries() {
   }
 }
 
-// ── Redis-backed rate limiting ──────────────────────────────────────────────
-// We dynamically import @upstash/redis only when env vars are present
-// to keep the middleware edge-compatible and avoid import errors.
+// ── Upstash REST-backed rate limiting ───────────────────────────────────────
+// Uses direct REST commands so middleware remains Edge-compatible.
 
-let _redis = undefined; // undefined = not yet checked, null = not configured
+let _upstash = undefined; // undefined = not yet checked, null = not configured
 
-async function getRedis() {
-  if (_redis !== undefined) return _redis;
+function getUpstashConfig() {
+  if (_upstash !== undefined) return _upstash;
   const url = process.env.UPSTASH_REDIS_REST_URL;
   const token = process.env.UPSTASH_REDIS_REST_TOKEN;
   if (url && token) {
-    try {
-      const { Redis } = await import('@upstash/redis');
-      _redis = new Redis({ url, token });
-    } catch {
-      _redis = null;
-    }
+    _upstash = {
+      url: url.replace(/\/+$/, ''),
+      token,
+    };
   } else {
-    _redis = null;
+    _upstash = null;
   }
-  return _redis;
+  return _upstash;
 }
 
-async function getTimestampsFromKV(redis, ip) {
+async function upstashCommand(command) {
+  const cfg = getUpstashConfig();
+  if (!cfg) return null;
   try {
-    const key = `ratelimit:${ip}`;
-    const data = await redis.get(key);
-    if (Array.isArray(data)) return data;
-    return [];
+    const response = await fetch(cfg.url, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${cfg.token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(command),
+    });
+    if (!response.ok) return null;
+    const data = await response.json();
+    return data?.result ?? null;
+  } catch {
+    return null;
+  }
+}
+
+async function getTimestampsFromKV(ip) {
+  const key = `ratelimit:${ip}`;
+  const raw = await upstashCommand(['GET', key]);
+  if (typeof raw !== 'string' || !raw) return [];
+  try {
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
   } catch {
     return [];
   }
 }
 
-async function setTimestampsToKV(redis, ip, timestamps) {
-  try {
-    const key = `ratelimit:${ip}`;
-    await redis.set(key, timestamps, { ex: 3600 }); // TTL = 1 hour
-  } catch {
-    // Non-critical — fall through to in-memory.
-  }
+async function setTimestampsToKV(ip, timestamps) {
+  const key = `ratelimit:${ip}`;
+  await upstashCommand(['SET', key, JSON.stringify(timestamps), 'EX', '3600']);
 }
 
 // ── Shared logic ────────────────────────────────────────────────────────────
@@ -123,17 +137,17 @@ function rateLimitResponse(check) {
 
 // ── Middleware entry point ──────────────────────────────────────────────────
 
-export async function middleware(request) {
+export async function proxy(request) {
   // Only rate-limit POST requests to /api/*.
   if (request.method !== 'POST') return NextResponse.next();
 
   const now = Date.now();
   const ip = getClientIp(request);
-  const redis = await getRedis();
+  const upstash = getUpstashConfig();
 
   // ── KV-backed path ───────────────────────────────────────────────────
-  if (redis) {
-    let timestamps = await getTimestampsFromKV(redis, ip);
+  if (upstash) {
+    let timestamps = await getTimestampsFromKV(ip);
     // Prune timestamps older than 1 hour.
     timestamps = timestamps.filter((ts) => ts > now - HOUR_MS);
 
@@ -142,7 +156,7 @@ export async function middleware(request) {
 
     timestamps.push(now);
     // Fire-and-forget — don't block the request on the KV write.
-    setTimestampsToKV(redis, ip, timestamps);
+    setTimestampsToKV(ip, timestamps);
 
     const response = NextResponse.next();
     const remainMin = MINUTE_LIMIT - timestamps.filter((ts) => ts > now - MINUTE_MS).length;
